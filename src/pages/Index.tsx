@@ -99,10 +99,11 @@ const Index = () => {
       const auth = authResult as { ok: boolean; error?: string };
 
       if (!auth.ok) {
-        toast.error(auth.error === "login_nao_encontrado" || auth.error === "senha_incorreta"
-          ? "Login ou senha incorretos"
-          : auth.error ?? "Credenciais inválidas"
-        );
+        const msg =
+          auth.error === "conta_inativa"
+            ? "Sua conta está inativa. Entre em contato com o suporte."
+            : "Login ou senha incorretos";
+        toast.error(msg);
         return;
       }
 
