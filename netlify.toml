@@ -1,0 +1,39 @@
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Redireciona /api/* para as Netlify Functions
+[[redirects]]
+  from   = "/api/cadastro"
+  to     = "/.netlify/functions/cadastro"
+  status = 200
+
+[[redirects]]
+  from   = "/api/qr-code"
+  to     = "/.netlify/functions/qr-code"
+  status = 200
+
+[[redirects]]
+  from   = "/api/pairing-code"
+  to     = "/.netlify/functions/pairing-code"
+  status = 200
+
+[[redirects]]
+  from   = "/api/status-conexao"
+  to     = "/.netlify/functions/status-conexao"
+  status = 200
+
+[[redirects]]
+  from   = "/api/forgot-password"
+  to     = "/.netlify/functions/forgot-password"
+  status = 200
+
+# SPA fallback — React Router
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
