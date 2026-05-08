@@ -37,11 +37,19 @@ exports.handler = async (event) => {
       `${SUPABASE_URL}/rest/v1/rapdex_slots?select=*&order=tipo,slot_nome`,
       { headers: supabaseHeaders }
     );
-    const data = await res.json();
+    const raw = await res.text();
+    // Devolve o status e body bruto para debug caso não seja array
+    if (!res.ok || !raw.startsWith('[')) {
+      return {
+        statusCode: 200,
+        headers: headers({ 'Access-Control-Allow-Origin': '*' }),
+        body: JSON.stringify({ _debug: true, status: res.status, body: raw, service_key_present: !!SERVICE_KEY }),
+      };
+    }
     return {
       statusCode: 200,
       headers: headers({ 'Access-Control-Allow-Origin': '*' }),
-      body: JSON.stringify(data),
+      body: raw,
     };
   }
 
