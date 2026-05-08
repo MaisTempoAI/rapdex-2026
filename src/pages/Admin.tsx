@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, Save, Unlock, Lock, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Slot {
   id: number;
   slot_nome: string;
-  tipo: 'free' | 'premium';
-  status: 'disponivel' | 'ocupado' | 'manutencao';
+  tipo: string;
+  status: string;
   login: string | null;
   quepasa_key: string | null;
   quepasa_wid: string | null;
@@ -21,9 +22,9 @@ interface Slot {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  disponivel:  'bg-green-500/20 text-green-400 border-green-500/30',
-  ocupado:     'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  manutencao:  'bg-red-500/20 text-red-400 border-red-500/30',
+  disponivel: 'bg-green-500/20 text-green-400 border-green-500/30',
+  ocupado:    'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  manutencao: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
 const TIPO_COLOR: Record<string, string> = {
@@ -32,51 +33,44 @@ const TIPO_COLOR: Record<string, string> = {
 };
 
 export default function Admin() {
-  const [adminKey, setAdminKey]     = useState('');
+  const [adminKey, setAdminKey]       = useState('');
   const [autenticado, setAutenticado] = useState(false);
-  const [slots, setSlots]           = useState<Slot[]>([]);
-  const [editando, setEditando]     = useState<Record<number, Partial<Slot>>>({});
-  const [loading, setLoading]       = useState(false);
-  const [salvando, setSalvando]     = useState<number | null>(null);
+  const [slots, setSlots]             = useState<Slot[]>([]);
+  const [editando, setEditando]       = useState<Record<number, Partial<Slot>>>({});
+  const [loading, setLoading]         = useState(false);
+  const [salvando, setSalvando]       = useState<number | null>(null);
 
   const buscarSlots = async (key = adminKey) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin-slots', {
-        headers: { 'x-admin-key': key },
-      });
-      if (res.status === 401) { toast.error('Senha incorreta.'); return; }
-      const data = await res.json();
-      // debug envelope ou array direto
-      const list = Array.isArray(data) ? data : (data.slots ?? []);
-      if (data._debug) console.log('[admin-slots debug]', data._debug);
-      setSlots(list);
+      const { data, error } = await supabase.rpc('admin_get_slots', { p_key: key });
+      if (error) { toast.error('Erro ao buscar slots.'); return; }
+      if (data?.error === 'unauthorized') { toast.error('Senha incorreta.'); return; }
+      setSlots((data as Slot[]) ?? []);
       setAutenticado(true);
-    } catch {
-      toast.error('Erro ao buscar slots.');
     } finally {
       setLoading(false);
     }
   };
 
   const salvar = async (slot: Slot) => {
-    const changes = editando[slot.id];
-    if (!changes || Object.keys(changes).length === 0) return;
+    const c = editando[slot.id];
+    if (!c || !Object.keys(c).length) return;
     setSalvando(slot.id);
     try {
-      const res = await fetch('/api/admin-slots', {
-        method: 'PUT',
-        headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: slot.id, ...changes }),
+      const { data } = await supabase.rpc('admin_update_slot', {
+        p_key:     adminKey,
+        p_id:      slot.id,
+        p_webhook: c.webhook_mensagem ?? null,
+        p_workflow: c.workflow_url ?? null,
+        p_status:  c.status ?? null,
+        p_notas:   c.slot_notas ?? null,
       });
-      const data = await res.json();
-      if (data.ok) {
+      if (data?.ok) {
         toast.success(`Slot ${slot.slot_nome} atualizado.`);
         setEditando(prev => { const n = { ...prev }; delete n[slot.id]; return n; });
         buscarSlots();
       }
-    } catch {
-      toast.error('Erro ao salvar.');
     } finally {
       setSalvando(null);
     }
@@ -86,23 +80,15 @@ export default function Admin() {
     if (!confirm(`Liberar slot ${slot.slot_nome} (desconecta ${slot.login})?`)) return;
     setSalvando(slot.id);
     try {
-      const res = await fetch('/api/admin-slots', {
-        method: 'POST',
-        headers: { 'x-admin-key': adminKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'liberar', id: slot.id }),
-      });
-      const data = await res.json();
-      if (data.ok) { toast.success('Slot liberado.'); buscarSlots(); }
-    } catch {
-      toast.error('Erro ao liberar slot.');
+      const { data } = await supabase.rpc('admin_liberar_slot', { p_key: adminKey, p_id: slot.id });
+      if (data?.ok) { toast.success('Slot liberado.'); buscarSlots(); }
     } finally {
       setSalvando(null);
     }
   };
 
-  const setField = (id: number, field: keyof Slot, value: string) => {
+  const setField = (id: number, field: keyof Slot, value: string) =>
     setEditando(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
-  };
 
   const getVal = (slot: Slot, field: keyof Slot): string =>
     (editando[slot.id]?.[field] as string) ?? (slot[field] as string) ?? '';
@@ -145,8 +131,6 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto">
-
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-white text-2xl font-bold">Slots RAPDEX</h1>
@@ -157,7 +141,6 @@ export default function Admin() {
           </Button>
         </div>
 
-        {/* Resumo */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {(['disponivel', 'ocupado', 'manutencao'] as const).map(s => (
             <div key={s} className="bg-slate-900 border border-slate-800 rounded-xl p-4">
@@ -167,20 +150,17 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Tabela de slots */}
         <div className="flex flex-col gap-4">
           {slots.map(slot => {
             const temAlteracao = Object.keys(editando[slot.id] ?? {}).length > 0;
             return (
               <div key={slot.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-                {/* Cabeçalho do slot */}
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-white font-mono font-bold text-lg">{slot.slot_nome}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLOR[slot.status]}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLOR[slot.status] ?? ''}`}>
                     {slot.status}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${TIPO_COLOR[slot.tipo]}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${TIPO_COLOR[slot.tipo] ?? ''}`}>
                     {slot.tipo}
                   </span>
                   {slot.login && (
@@ -195,7 +175,6 @@ export default function Admin() {
                   )}
                 </div>
 
-                {/* Campos editáveis */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="text-slate-500 text-xs mb-1 block">Webhook Mensagem (N8N)</label>
@@ -216,7 +195,7 @@ export default function Admin() {
                   <div>
                     <label className="text-slate-500 text-xs mb-1 block">Status</label>
                     <select
-                      value={getVal(slot, 'status') || slot.status}
+                      value={editando[slot.id]?.status ?? slot.status}
                       onChange={e => setField(slot.id, 'status', e.target.value)}
                       className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-md px-3 py-2"
                     >
@@ -236,7 +215,6 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {/* QUEPASA info (read-only) */}
                 {slot.quepasa_key && (
                   <div className="mt-3 flex gap-4 text-xs text-slate-600">
                     <span>🔑 {slot.quepasa_key}</span>
@@ -244,7 +222,6 @@ export default function Admin() {
                   </div>
                 )}
 
-                {/* Ações */}
                 <div className="flex gap-2 mt-4">
                   {temAlteracao && (
                     <Button
@@ -253,9 +230,7 @@ export default function Admin() {
                       onClick={() => salvar(slot)}
                       disabled={salvando === slot.id}
                     >
-                      {salvando === slot.id
-                        ? <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                        : <Save className="w-3 h-3 mr-1" />}
+                      {salvando === slot.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Save className="w-3 h-3 mr-1" />}
                       Salvar
                     </Button>
                   )}
