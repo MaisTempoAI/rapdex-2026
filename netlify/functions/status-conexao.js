@@ -1,4 +1,5 @@
-const N8N = process.env.N8N_BASE_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
+const QUEPASA = process.env.QUEPASA_BASE_URL || 'https://quepasa-stack-quepasa.pkgaq6.easypanel.host';
+const QUEPASA_USER = process.env.QUEPASA_USER || 'access@maistempoai.com.br';
 
 exports.handler = async (event) => {
   const { token } = event.queryStringParameters || {};
@@ -12,20 +13,35 @@ exports.handler = async (event) => {
   }
 
   try {
-    const res = await fetch(
-      `${N8N}/webhook/rapdex-status-conexao?token=${encodeURIComponent(token)}`
-    );
+    const res = await fetch(`${QUEPASA}/v3/bot/${encodeURIComponent(token)}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-QUEPASA-TOKEN': token,
+        'X-QUEPASA-USER': QUEPASA_USER,
+      },
+    });
+
+    if (!res.ok) {
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conectado: false }),
+      };
+    }
+
     const data = await res.json();
+    const conectado = data.success === true && !!data.server?.wid;
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ conectado, wid: data.server?.wid ?? null }),
     };
-  } catch (err) {
+  } catch {
     return {
-      statusCode: 502,
+      statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conectado: false, error: 'n8n_indisponivel' }),
+      body: JSON.stringify({ conectado: false }),
     };
   }
 };
