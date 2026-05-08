@@ -40,12 +40,18 @@ export default function Admin() {
   const [loading, setLoading]         = useState(false);
   const [salvando, setSalvando]       = useState<number | null>(null);
 
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD as string | undefined;
+
   const buscarSlots = async (key = adminKey) => {
+    // Verifica senha no frontend antes de chamar o banco
+    if (ADMIN_PASSWORD && key !== ADMIN_PASSWORD) {
+      toast.error('Senha incorreta.');
+      return;
+    }
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('admin_get_slots', { p_key: key });
+      const { data, error } = await supabase.rpc('admin_get_slots');
       if (error) { toast.error('Erro ao buscar slots.'); return; }
-      if (data?.error === 'unauthorized') { toast.error('Senha incorreta.'); return; }
       setSlots((data as Slot[]) ?? []);
       setAutenticado(true);
     } finally {
@@ -59,7 +65,6 @@ export default function Admin() {
     setSalvando(slot.id);
     try {
       const { data } = await supabase.rpc('admin_update_slot', {
-        p_key:     adminKey,
         p_id:      slot.id,
         p_webhook: c.webhook_mensagem ?? null,
         p_workflow: c.workflow_url ?? null,
@@ -80,7 +85,7 @@ export default function Admin() {
     if (!confirm(`Liberar slot ${slot.slot_nome} (desconecta ${slot.login})?`)) return;
     setSalvando(slot.id);
     try {
-      const { data } = await supabase.rpc('admin_liberar_slot', { p_key: adminKey, p_id: slot.id });
+      const { data } = await supabase.rpc('admin_liberar_slot', { p_id: slot.id });
       if (data?.ok) { toast.success('Slot liberado.'); buscarSlots(); }
     } finally {
       setSalvando(null);
