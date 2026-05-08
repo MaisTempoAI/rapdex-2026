@@ -1,0 +1,151 @@
+{
+  "name": "RAPDEX — Cron Expiração Trial",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 3 * * *"
+            }
+          ]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Todo dia 3h da manhã",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rudtxgwzqrsvrdniqvav.supabase.co/rest/v1/rpc/disable_expired_trials",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {}
+      },
+      "id": "node-disable-trials",
+      "name": "Desativar Trials Expirados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "node-if-expirados",
+      "name": "Tem expirados?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "node-loop",
+      "name": "Para cada conta",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $json.quepasa_base_url }}/v3/bot/{{ $json.quepasa_key }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-QUEPASA-TOKEN", "value": "={{ $json.quepasa_key }}" },
+            { "name": "X-QUEPASA-USER", "value": "={{ $env.QUEPASA_USER }}" }
+          ]
+        },
+        "options": { "ignore404": true }
+      },
+      "id": "node-quepasa-disconnect",
+      "name": "Desconectar QUEPASA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Para cada conta').item.json.quepasa_base_url }}/v3/bot/{{ $env.QUEPASA_TOKEN_RAPDEX }}/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-QUEPASA-TOKEN", "value": "={{ $env.QUEPASA_TOKEN_RAPDEX }}" },
+            { "name": "X-QUEPASA-USER", "value": "={{ $env.QUEPASA_USER }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chatId\": \"{{ $('Para cada conta').item.json.whatsapp }}@s.whatsapp.net\",\n  \"text\": \"Olá, *{{ $('Para cada conta').item.json.nome_empresa }}*! 👋\\n\\nSeu período de teste gratuito do *RAPDEX* encerrou hoje.\\n\\nPara continuar usando o atendimento automático no WhatsApp, entre em contato conosco para assinar o plano.\\n\\n📲 Responda essa mensagem ou fale com nosso time.\"\n}",
+        "options": {}
+      },
+      "id": "node-whatsapp-aviso",
+      "name": "WhatsApp — Trial Encerrado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {},
+      "id": "node-nenhum",
+      "name": "Nenhum expirado hoje",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 420]
+    }
+  ],
+  "connections": {
+    "Todo dia 3h da manhã": {
+      "main": [[{ "node": "Desativar Trials Expirados", "type": "main", "index": 0 }]]
+    },
+    "Desativar Trials Expirados": {
+      "main": [[{ "node": "Tem expirados?", "type": "main", "index": 0 }]]
+    },
+    "Tem expirados?": {
+      "main": [
+        [{ "node": "Para cada conta", "type": "main", "index": 0 }],
+        [{ "node": "Nenhum expirado hoje", "type": "main", "index": 0 }]
+      ]
+    },
+    "Para cada conta": {
+      "main": [[{ "node": "Desconectar QUEPASA", "type": "main", "index": 0 }]]
+    },
+    "Desconectar QUEPASA": {
+      "main": [[{ "node": "WhatsApp — Trial Encerrado", "type": "main", "index": 0 }]]
+    },
+    "WhatsApp — Trial Encerrado": {
+      "main": [[{ "node": "Para cada conta", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
