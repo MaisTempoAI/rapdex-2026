@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, ChevronRight, ChevronLeft, Smartphone, Monitor } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { FileUploader } from '@/components/FileUploader';
 
 // ─── Tipos ───────────────────────────────────────────────────
 interface FaqSlot {
@@ -254,7 +255,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto pr-1">
+      <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto pr-1">
         {faqs.map((faq, idx) => (
           <div key={idx} className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -278,6 +279,14 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
               rows={2}
               className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-600 text-sm resize-none"
             />
+            <div className="border-t border-slate-700 pt-3">
+              <FileUploader
+                value={faq.midia_url ?? ''}
+                onChange={url => atualizarFaq(idx, 'midia_url', url || null)}
+                userLogin={celular || 'onboarding'}
+                questionNumber={faq.slot}
+              />
+            </div>
           </div>
         ))}
       </div>
