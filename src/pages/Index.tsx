@@ -100,10 +100,12 @@ const Index = () => {
 
       if (!auth.ok) {
         const msg =
-          auth.error === "conta_inativa"
+          auth.error === "trial_expirado"
+            ? "Seu período de teste encerrou. Entre em contato para assinar o plano."
+            : auth.error === "conta_inativa"
             ? "Sua conta está inativa. Entre em contato com o suporte."
             : "Login ou senha incorretos";
-        toast.error(msg);
+        toast.error(msg, { duration: 6000 });
         return;
       }
 

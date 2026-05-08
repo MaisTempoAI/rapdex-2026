@@ -255,7 +255,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto pr-1">
+      <div className="flex flex-col gap-4">
         {faqs.map((faq, idx) => (
           <div key={idx} className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -521,9 +521,11 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   const totalSteps = 4;
   const progresso = Math.min((stepIndex[step] / totalSteps) * 100, 100);
 
+  const isWideStep = step === 'faqs';
+
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+    <div className="min-h-screen bg-slate-950 flex items-start justify-center p-4 py-8">
+      <div className={`w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl transition-all duration-300 ${isWideStep ? 'max-w-2xl' : 'max-w-md'}`}>
 
         {onBack && step !== 'finalizando' && (
           <button
