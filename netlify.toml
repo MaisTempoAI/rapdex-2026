@@ -32,6 +32,11 @@
   to     = "/.netlify/functions/forgot-password"
   status = 200
 
+[[redirects]]
+  from   = "/api/admin-slots"
+  to     = "/.netlify/functions/admin-slots"
+  status = 200
+
 # SPA fallback — React Router
 [[redirects]]
   from   = "/*"
