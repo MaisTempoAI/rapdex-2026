@@ -47,7 +47,10 @@ export default function Admin() {
       });
       if (res.status === 401) { toast.error('Senha incorreta.'); return; }
       const data = await res.json();
-      setSlots(data);
+      // debug envelope ou array direto
+      const list = Array.isArray(data) ? data : (data.slots ?? []);
+      if (data._debug) console.log('[admin-slots debug]', data._debug);
+      setSlots(list);
       setAutenticado(true);
     } catch {
       toast.error('Erro ao buscar slots.');

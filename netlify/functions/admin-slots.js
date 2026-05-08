@@ -38,18 +38,15 @@ exports.handler = async (event) => {
       { headers: supabaseHeaders }
     );
     const raw = await res.text();
-    // Devolve o status e body bruto para debug caso não seja array
-    if (!res.ok || !raw.startsWith('[')) {
-      return {
-        statusCode: 200,
-        headers: headers({ 'Access-Control-Allow-Origin': '*' }),
-        body: JSON.stringify({ _debug: true, status: res.status, body: raw, service_key_present: !!SERVICE_KEY }),
-      };
-    }
+    const data = JSON.parse(raw);
+    // Sempre inclui debug info para diagnosticar
     return {
       statusCode: 200,
       headers: headers({ 'Access-Control-Allow-Origin': '*' }),
-      body: raw,
+      body: JSON.stringify({
+        _debug: { count: data.length, http_status: res.status, service_key_present: !!SERVICE_KEY, url: SUPABASE_URL },
+        slots: data,
+      }),
     };
   }
 
