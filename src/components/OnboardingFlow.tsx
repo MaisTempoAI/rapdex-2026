@@ -35,7 +35,10 @@ export default function OnboardingFlow({ onComplete }: OnboardingProps) {
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [pollingAtivo, setPollingAtivo] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [qrExpirado, setQrExpirado] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [faqs, setFaqs] = useState<FaqSlot[]>([
     { slot: 1, pergunta: '', resposta: '', midia_url: null, midia_tipo: null, ativa: true },
@@ -52,7 +55,12 @@ export default function OnboardingFlow({ onComplete }: OnboardingProps) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
     setPollingAtivo(false);
+    setCountdown(null);
   }, []);
 
   // ─── Step: Boas-vindas ────────────────────────────────────────
@@ -129,6 +137,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingProps) {
     setLoading(true);
     setQrBase64(null);
     setPairingCode(null);
+    setQrExpirado(false);
     pararPolling();
 
     try {
@@ -145,6 +154,23 @@ export default function OnboardingFlow({ onComplete }: OnboardingProps) {
 
       if (dispositivo === 'desktop') {
         setQrBase64(data.qr_base64);
+        // Contador de 60s — QR expira em 1 minuto
+        let secs = 60;
+        setCountdown(secs);
+        countdownRef.current = setInterval(() => {
+          secs -= 1;
+          if (secs <= 0) {
+            clearInterval(countdownRef.current!);
+            countdownRef.current = null;
+            if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
+            setPollingAtivo(false);
+            setCountdown(null);
+            setQrBase64(null);
+            setQrExpirado(true);
+          } else {
+            setCountdown(secs);
+          }
+        }, 1000);
       } else {
         setPairingCode(data.code);
       }
@@ -207,10 +233,27 @@ export default function OnboardingFlow({ onComplete }: OnboardingProps) {
         </button>
       </div>
 
-      {qrBase64 && (
-        <div className="flex flex-col items-center gap-3">
-          <img src={qrBase64} alt="QR Code WhatsApp" className="w-48 h-48 rounded-xl border border-slate-700" />
+      {qrExpirado && (
+        <div className="flex flex-col items-center gap-3 p-4 bg-slate-800 rounded-xl border border-red-500/40">
+          <span className="text-3xl">⏱️</span>
+          <p className="text-red-400 font-semibold text-sm">QR Code expirado</p>
           <p className="text-slate-400 text-xs text-center">
+            O código ficou inativo por 1 minuto. Clique em "Gerar novo" para continuar.
+          </p>
+        </div>
+      )}
+
+      {qrBase64 && !qrExpirado && (
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <img src={qrBase64} alt="QR Code WhatsApp" className="w-48 h-48 rounded-xl border border-slate-700" />
+            {countdown !== null && (
+              <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-xs font-mono border ${countdown <= 10 ? 'bg-red-900/80 border-red-500 text-red-300' : 'bg-slate-900 border-slate-600 text-slate-400'}`}>
+                ⏱ {countdown}s
+              </div>
+            )}
+          </div>
+          <p className="text-slate-400 text-xs text-center mt-2">
             Abra o WhatsApp → Dispositivos vinculados → Vincular dispositivo
           </p>
           {pollingAtivo && (
