@@ -107,22 +107,9 @@ const Index = () => {
         return;
       }
 
-      // 2. Carrega conta completa + FAQs em paralelo
-      const [{ data: acc, error: accErr }, { data: faqs, error: faqErr }] = await Promise.all([
-        supabase.from("rapdex_accounts").select("*").eq("login", credentials.login).single(),
-        supabase.from("rapdex_faqs").select("*").eq("login", credentials.login).order("slot"),
-      ]);
-
-      if (accErr || !acc) {
-        toast.error("Erro ao carregar dados da conta.");
-        return;
-      }
-
-      if (faqErr) {
-        console.warn("Erro ao carregar FAQs:", faqErr);
-      }
-
-      setUserData(mapToUserData(acc as Account, (faqs ?? []) as Faq[]));
+      // 2. validate_login já retorna account + FAQs — sem SELECT direto nas tabelas
+      const full = authResult as { ok: boolean; error?: string; account?: Account; faqs?: Faq[] };
+      setUserData(mapToUserData(full.account as Account, (full.faqs ?? []) as Faq[]));
       setIsAuthenticated(true);
       toast.success("Login realizado com sucesso!");
     } catch {
