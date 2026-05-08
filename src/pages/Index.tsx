@@ -131,6 +131,7 @@ const Index = () => {
     return (
       <OnboardingFlow
         onComplete={() => setShowOnboarding(false)}
+        onBack={() => setShowOnboarding(false)}
       />
     );
   }

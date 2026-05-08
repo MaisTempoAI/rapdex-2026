@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const STORAGE_BUCKET_URL = "https://wueuppkkmpedalxtjouy.supabase.co/storage/v1/object/public/rapi10";
+const BUCKET_NAME = 'rapdex-midia';
+const STORAGE_BUCKET_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}`;
 const MAX_IMAGES = 3;
 
 type FileType = "image" | "audio" | "pdf";
@@ -143,7 +144,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       }
 
       const { error: uploadError } = await supabase.storage
-        .from("rapi10")
+        .from(BUCKET_NAME)
         .upload(newFileName, file, uploadOptions);
 
       if (uploadError) {
@@ -173,7 +174,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     const fileNameToDelete = getFileNameFromUrl(target);
     if (fileNameToDelete && target.includes(STORAGE_BUCKET_URL)) {
       try {
-        await supabase.storage.from("rapi10").remove([fileNameToDelete]);
+        await supabase.storage.from(BUCKET_NAME).remove([fileNameToDelete]);
       } catch (error) {
         console.error("Error deleting file:", error);
       }
@@ -187,7 +188,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       const fileNameToDelete = getFileNameFromUrl(u);
       if (fileNameToDelete && u.includes(STORAGE_BUCKET_URL)) {
         try {
-          await supabase.storage.from("rapi10").remove([fileNameToDelete]);
+          await supabase.storage.from(BUCKET_NAME).remove([fileNameToDelete]);
         } catch (error) {
           console.error("Error deleting file:", error);
         }
