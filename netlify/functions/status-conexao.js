@@ -30,7 +30,7 @@ exports.handler = async (event) => {
     }
 
     const data = await res.json();
-    const conectado = data.success === true && !!data.server?.wid;
+    const conectado = data.server?.verified === true;
 
     return {
       statusCode: 200,

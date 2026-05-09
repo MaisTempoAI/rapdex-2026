@@ -11,7 +11,7 @@ exports.handler = async (event) => {
 
   try {
     const payload = JSON.parse(event.body || '{}');
-    const res = await fetch(`${N8N}/webhook/rapdex-cadastro`, {
+    const res = await fetch(`${N8N}/webhook/rapdex-perguntas-onboarding`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
