@@ -1,5 +1,5 @@
-const PUSHOVER_URL = process.env.PUSHOVER_WEBHOOK_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host/webhook/pushover-7988';
 const N8N = process.env.N8N_BASE_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
+const { notificar } = require('./lib/pushover');
 
 exports.handler = async (event) => {
   const { celular } = event.queryStringParameters || {};
@@ -12,15 +12,10 @@ exports.handler = async (event) => {
     };
   }
 
-  // Notifica ANTES de gerar o QR (await garante que não é cancelado pelo serverless)
-  await fetch(PUSHOVER_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title: '📱 Novo Cadastro Iniciado',
-      message: `Número ${celular} clicou em Conectar e pediu QR Code.`,
-    }),
-  }).catch(() => {});
+  await notificar({
+    title: '📱 Novo Cadastro Iniciado',
+    message: `Número ${celular} clicou em Conectar e pediu QR Code.`,
+  });
 
   try {
     const res = await fetch(
