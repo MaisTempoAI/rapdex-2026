@@ -12,8 +12,8 @@ exports.handler = async (event) => {
     };
   }
 
-  // Notifica ANTES de gerar o QR
-  fetch(PUSHOVER_URL, {
+  // Notifica ANTES de gerar o QR (await garante que não é cancelado pelo serverless)
+  await fetch(PUSHOVER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
