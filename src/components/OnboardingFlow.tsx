@@ -369,18 +369,22 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
 
   const iniciarPolling = (tok: string) => {
     setPollingAtivo(true);
-    pollingRef.current = setInterval(async () => {
+
+    const doCheck = async () => {
       try {
-        const res = await fetch(`/api/status-conexao?token=${tok}`);
+        const res = await fetch(`/api/status-conexao?token=${encodeURIComponent(tok)}`);
         const data = await res.json();
         if (data.conectado) {
           pararPolling();
           finalizarCadastro(tok);
         }
-      } catch {
-        // silencia erros de polling
-      }
-    }, 3000);
+      } catch { }
+    };
+
+    // Checa a cada 10s
+    pollingRef.current = setInterval(doCheck, 10_000);
+    // Check final 5s antes do QR expirar (55s)
+    setTimeout(() => { if (pollingRef.current) doCheck(); }, 55_000);
   };
 
   const renderConexao = () => (

@@ -1,0 +1,85 @@
+{
+  "name": "RAPDEX — Verifica Conexão QUEPASA",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "rapdex2026-consulta-quepasa-connect",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c2000001-0001-4000-8000-aaaaaaaaaaaa",
+      "name": "Webhook Verifica Conexão",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://quepasa-stack-quepasa.pkgaq6.easypanel.host/v3/bot/{{ $json.headers.quepasakey }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-QUEPASA-USER",
+              "value": "access@maistempoai.com.br"
+            },
+            {
+              "name": "X-QUEPASA-TOKEN",
+              "value": "={{ $json.headers.quepasakey }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c2000001-0002-4000-8000-bbbbbbbbbbbb",
+      "name": "QUEPASA Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first()?.json ?? {};\nconst conectado = data?.server?.verified === true;\nreturn [{ json: { conectado } }];"
+      },
+      "id": "c2000001-0003-4000-8000-cccccccccccc",
+      "name": "Formata Resposta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "c2000001-0004-4000-8000-dddddddddddd",
+      "name": "Responde Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Verifica Conexão": {
+      "main": [
+        [{ "node": "QUEPASA Status", "type": "main", "index": 0 }]
+      ]
+    },
+    "QUEPASA Status": {
+      "main": [
+        [{ "node": "Formata Resposta", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formata Resposta": {
+      "main": [
+        [{ "node": "Responde Webhook", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
