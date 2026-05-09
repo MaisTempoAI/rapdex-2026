@@ -1,4 +1,4 @@
-const PUSHOVER_WEBHOOK = 'https://n8n-stack-n8n.nzdbvp.easypanel.host/webhook/pushover-7988';
+const PUSHOVER_WEBHOOK = process.env.PUSHOVER_WEBHOOK_URL ?? 'https://n8n-stack-n8n.nzdbvp.easypanel.host/webhook/pushover-7988';
 
 interface PushoverOpts {
   title?:    string;
