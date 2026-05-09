@@ -8,7 +8,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const res = await fetch(`${N8N_BASE_URL}/webhook/rapdex-cadastro`, {
+    const res = await fetch(`${N8N_BASE_URL}/webhook/rapdex-perguntas-onboarding`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: event.body ?? '{}',

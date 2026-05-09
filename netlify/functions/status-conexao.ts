@@ -1,6 +1,7 @@
 import type { Handler } from '@netlify/functions';
 
-const N8N_BASE_URL = process.env.N8N_BASE_URL!;
+const QUEPASA_BASE_URL = process.env.QUEPASA_BASE_URL ?? 'https://quepasa-stack-quepasa.pkgaq6.easypanel.host';
+const QUEPASA_USER    = process.env.QUEPASA_USER    ?? 'access@maistempoai.com.br';
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'GET') {
@@ -8,24 +9,32 @@ export const handler: Handler = async (event) => {
   }
 
   const token = event.queryStringParameters?.token ?? '';
+  if (!token) {
+    return { statusCode: 200, body: JSON.stringify({ conectado: false }) };
+  }
 
   try {
-    const res = await fetch(
-      `${N8N_BASE_URL}/webhook/rapdex-status-conexao?token=${encodeURIComponent(token)}`
-    );
+    const res = await fetch(`${QUEPASA_BASE_URL}/v3/bot/${token}`, {
+      headers: {
+        'X-QUEPASA-USER':  QUEPASA_USER,
+        'X-QUEPASA-TOKEN': token,
+      },
+    });
 
-    // N8N retorna: { conectado: true/false }
-    const text = await res.text();
+    if (!res.ok) {
+      return { statusCode: 200, body: JSON.stringify({ conectado: false }) };
+    }
 
-    return {
-      statusCode: res.status,
-      headers: { 'Content-Type': 'application/json' },
-      body: text,
-    };
-  } catch {
+    const data = await res.json();
+    const conectado = data?.server?.verified === true;
+    const wid       = data?.server?.wid ?? null;
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ conectado: false }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conectado, wid }),
     };
+  } catch {
+    return { statusCode: 200, body: JSON.stringify({ conectado: false }) };
   }
 };
