@@ -1,9 +1,9 @@
-const CONNECT_URL = process.env.QUEPASA_CONNECT_WEBHOOK_URL || '';
+const CONNECT_URL = process.env.QUEPASA_CONNECT_WEBHOOK_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host/webhook/rapdex2026-consulta-quepasa-connect';
 
 exports.handler = async (event) => {
   const { token } = event.queryStringParameters || {};
 
-  if (!token || !CONNECT_URL) {
+  if (!token) {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
