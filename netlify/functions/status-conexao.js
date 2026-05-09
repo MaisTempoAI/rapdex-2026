@@ -1,24 +1,19 @@
-const QUEPASA = process.env.QUEPASA_BASE_URL || 'https://quepasa-stack-quepasa.pkgaq6.easypanel.host';
-const QUEPASA_USER = process.env.QUEPASA_USER || 'access@maistempoai.com.br';
+const CONNECT_URL = process.env.QUEPASA_CONNECT_WEBHOOK_URL || '';
 
 exports.handler = async (event) => {
   const { token } = event.queryStringParameters || {};
 
-  if (!token) {
+  if (!token || !CONNECT_URL) {
     return {
-      statusCode: 400,
+      statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conectado: false, error: 'token_obrigatorio' }),
+      body: JSON.stringify({ conectado: false }),
     };
   }
 
   try {
-    const res = await fetch(`${QUEPASA}/v3/bot/${encodeURIComponent(token)}`, {
-      headers: {
-        'Accept': 'application/json',
-        'X-QUEPASA-TOKEN': token,
-        'X-QUEPASA-USER': QUEPASA_USER,
-      },
+    const res = await fetch(CONNECT_URL, {
+      headers: { quepasakey: token },
     });
 
     if (!res.ok) {
@@ -30,12 +25,10 @@ exports.handler = async (event) => {
     }
 
     const data = await res.json();
-    const conectado = data.server?.verified === true;
-
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conectado, wid: data.server?.wid ?? null }),
+      body: JSON.stringify({ conectado: data.conectado ?? false }),
     };
   } catch {
     return {
