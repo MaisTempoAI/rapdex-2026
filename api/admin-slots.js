@@ -1,7 +1,3 @@
-// Admin API para gerenciamento de slots
-// Protegida pela variável ADMIN_SECRET
-// Usa SUPABASE_SERVICE_KEY para ter acesso total à tabela rapdex_slots
-
 const SUPABASE_URL    = process.env.VITE_SUPABASE_URL || 'https://rudtxgwzqrsvrdniqvav.supabase.co';
 const SERVICE_KEY     = process.env.SUPABASE_SERVICE_KEY;
 const ADMIN_SECRET    = process.env.ADMIN_SECRET;
@@ -13,8 +9,7 @@ const supabaseHeaders = {
   'Prefer':        'return=representation',
 };
 
-module.exports = async function handler(req, res) {
-  // Verifica senha admin
+export default async function handler(req, res) {
   const adminKey = req.headers['x-admin-key'] || req.query?.admin_key;
   if (!ADMIN_SECRET || adminKey !== ADMIN_SECRET) {
     return res.status(401).json({ ok: false, error: 'unauthorized' });
@@ -22,7 +17,6 @@ module.exports = async function handler(req, res) {
 
   const method = req.method;
 
-  // GET — lista todos os slots
   if (method === 'GET') {
     const supaRes = await fetch(
       `${SUPABASE_URL}/rest/v1/rapdex_slots?select=*&order=tipo,slot_nome`,
@@ -36,7 +30,6 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // PUT — atualiza um slot (webhook, status, notas etc.)
   if (method === 'PUT') {
     const { id, ...fields } = req.body || {};
     if (!id) return res.status(400).json({ ok: false, error: 'id_obrigatorio' });
@@ -52,7 +45,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, slot: data[0] });
   }
 
-  // POST — libera slot manualmente (emergência)
   if (method === 'POST') {
     const { action, id } = req.body || {};
 
@@ -79,4 +71,4 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(405).json({ ok: false, error: 'method_not_allowed' });
-};
+}

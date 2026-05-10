@@ -1,6 +1,6 @@
 const N8N = process.env.N8N_BASE_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
   }
@@ -23,4 +23,4 @@ module.exports = async function handler(req, res) {
     console.error('[forgot-password] erro:', err.message);
     return res.status(502).json({ ok: false, error: 'Servidor indisponível.' });
   }
-};
+}

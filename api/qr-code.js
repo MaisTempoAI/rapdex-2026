@@ -1,7 +1,8 @@
-const N8N = process.env.N8N_BASE_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
-const { notificar } = require('./_lib/pushover');
+import { notificar } from './_lib/pushover.js';
 
-module.exports = async function handler(req, res) {
+const N8N = process.env.N8N_BASE_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
+
+export default async function handler(req, res) {
   const { celular } = req.query || {};
 
   if (!celular) {
@@ -24,4 +25,4 @@ module.exports = async function handler(req, res) {
     console.error('[qr-code] erro:', err.message);
     return res.status(502).json({ ok: false, error: 'n8n_indisponivel' });
   }
-};
+}

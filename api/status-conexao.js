@@ -1,6 +1,6 @@
 const CONNECT_URL = process.env.QUEPASA_CONNECT_WEBHOOK_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host/webhook/rapdex2026-consulta-quepasa-connect';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   const { token } = req.query || {};
 
   if (!token) {
@@ -34,4 +34,4 @@ module.exports = async function handler(req, res) {
     console.error('[status-conexao] erro fetch:', err.message);
     return res.status(200).json({ conectado: false });
   }
-};
+}
