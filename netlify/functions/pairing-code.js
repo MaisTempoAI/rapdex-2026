@@ -1,4 +1,5 @@
 const N8N = process.env.N8N_BASE_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
+const { notificar } = require('./lib/pushover');
 
 exports.handler = async (event) => {
   const { celular } = event.queryStringParameters || {};
@@ -10,6 +11,11 @@ exports.handler = async (event) => {
       body: JSON.stringify({ ok: false, error: 'celular_obrigatorio' }),
     };
   }
+
+  await notificar({
+    title: '📱 Novo Cadastro Iniciado',
+    message: `Número ${celular} clicou em Conectar e pediu Código de Pareamento.`,
+  });
 
   try {
     const res = await fetch(
