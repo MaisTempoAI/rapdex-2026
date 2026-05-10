@@ -8,6 +8,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Novo from "./pages/Novo";
 
+// Build trigger - 2026-05-10
 const queryClient = new QueryClient();
 
 const App = () => (
