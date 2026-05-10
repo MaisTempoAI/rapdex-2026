@@ -1,0 +1,27 @@
+const N8N = process.env.N8N_BASE_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
+const { notificar } = require('./_lib/pushover');
+
+module.exports = async function handler(req, res) {
+  const { celular } = req.query || {};
+
+  if (!celular) {
+    return res.status(400).json({ ok: false, error: 'celular_obrigatorio' });
+  }
+
+  await notificar({
+    title: '📱 Novo Cadastro Iniciado',
+    message: `Número ${celular} clicou em Conectar e pediu QR Code.`,
+  });
+
+  try {
+    const n8nRes = await fetch(
+      `${N8N}/webhook/criaqrcoderapdex?celular=${encodeURIComponent(celular)}`
+    );
+    const data = await n8nRes.json();
+
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error('[qr-code] erro:', err.message);
+    return res.status(502).json({ ok: false, error: 'n8n_indisponivel' });
+  }
+};
