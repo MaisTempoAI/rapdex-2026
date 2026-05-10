@@ -1,0 +1,1463 @@
+﻿{
+  "name": "RAPDEX RESPONSE MATRIX",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {"name": "whatsapp"},
+            {"name": "msg"},
+            {"name": "login"},
+            {"name": "msgtype"},
+            {"name": "token"},
+            {"name": "msgID"},
+            {"name": "nomeCliente"},
+            {"name": "fromme"},
+            {"name": "status"}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [-3712, 1856],
+      "id": "2d30f079-ac77-4dcc-bfe0-c8c6002a99c4",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "b234b710-c6a4-4b3d-ac59-3dd017de9a5e", "name": "quepasakey", "value": "={{ $json.token }}", "type": "string"},
+            {"id": "793f75c1-db43-422a-bb4e-492093587c80", "name": "fromme", "value": "={{ $json.fromme }}", "type": "string"},
+            {"id": "171ebe9f-5090-4a73-a9f5-6cc0572abdd7", "name": "numCliente", "value": "={{ $json.whatsapp }}", "type": "string"},
+            {"id": "6b0b6927-74d0-4251-a90a-92edc3d24e5a", "name": "numEmpresa", "value": "={{ $json.login }}", "type": "string"},
+            {"id": "85880756-ef88-4546-915f-170ec03e295f", "name": "nomeCliente", "value": "={{ $json.nomeCliente }}", "type": "string"},
+            {"id": "206fa49b-acfd-498a-8133-9e43022a8850", "name": "msg", "value": "={{ $json.msg }}", "type": "string"},
+            {"id": "4c3b5754-9f05-49c5-afd9-4756d6c2b692", "name": "msgType", "value": "={{ $json.msgtype }}", "type": "string"},
+            {"id": "576e178e-81b3-451b-abed-ba55c6383b91", "name": "msgID", "value": "={{ $json.msgID }}", "type": "string"},
+            {"id": "b10b4186-fa9c-449d-ab9c-d37f7ed7909c", "name": "base64", "value": "={{ $json.body.data.message.base64 }}", "type": "string"},
+            {"id": "7cf3452e-87fc-4fe7-b18f-2687439aed3d", "name": "horaAtual", "value": "={{ $now.setZone('America/Sao_Paulo').setLocale('pt-BR').toFormat('DDDD | HH:mm:ss') }}", "type": "string"},
+            {"id": "494fe45a-456f-46d2-ab03-dba57bfe69d3", "name": "NUMERO", "value": "={{ Math.floor(100000 + Math.random() * 900000) }}", "type": "string"},
+            {"id": "60217e95-4e68-4f2c-8d48-6e8aed3f79e0", "name": "delay", "value": 3500, "type": "number"},
+            {"id": "ec2f13a0-57d0-42c1-beeb-0deb353d5406", "name": "=supabase", "value": "={{ $json.login }}", "type": "string"},
+            {"id": "1a3f791c-6a90-4521-bc95-cd58f8be6a0d", "name": "instanceIDtelcliente", "value": "={{ $json.body.chat.phone }}.{{ $json.body.id }}", "type": "string"},
+            {"id": "262db657-761b-44af-8140-e2014d8a684b", "name": "status", "value": "={{ $json.status }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-3456, 1856],
+      "id": "d2643d75-251b-42c2-83cf-81a6f99dcd25",
+      "name": "GET HOK"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "rapdex_accounts",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quepasakey",
+              "keyValue": "={{ $json.quepasakey }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-3200, 1856],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567001",
+      "name": "DADOS CONTA",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "rapdex_slots",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quepasa_key",
+              "keyValue": "={{ $('GET HOK').item.json.quepasakey }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-3200, 1984],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567002",
+      "name": "GET SLOT",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "rapdex_faqs",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "login",
+              "condition": "eq",
+              "keyValue": "={{ $('DADOS CONTA').item.json.login }}"
+            },
+            {
+              "keyName": "ativa",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-3200, 2128],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567003",
+      "name": "GET FAQS",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const conta = $('DADOS CONTA').item.json;\nconst faqs  = $('GET FAQS').all().map(i => i.json).sort((a, b) => Number(a.slot) - Number(b.slot));\nconst slot  = $('GET SLOT').first()?.json ?? {};\n\nconst out = {\n  quepasakey:        conta.quepasakey,\n  login:             conta.login,\n  nome_empresa:      conta.nome_empresa,\n  quepasa_base_url:  slot.quepasa_base_url ?? 'https://quepasa-stack-quepasa.pkgaq6.easypanel.host',\n  botativo:          String(conta.bot_ativo),\n  Timer:             conta.delay_resposta ?? 3,\n  MSGSaudacaoactive: String(conta.saudacao_ativa),\n  MSGSaudacao:       conta.saudacao_texto ?? '',\n  MSGSaudacaourl:    conta.saudacao_url ?? '',\n  notificanumero:    String(conta.notifica_ativo),\n  whatsapp2:         conta.notifica_numero ?? '',\n  ia_regras:         conta.ia_regras ?? ''\n};\n\nfor (let i = 1; i <= 30; i++) {\n  const faq = faqs.find(f => Number(f.slot) === i);\n  out[`q${i}`]         = faq?.pergunta  ?? '';\n  out[`q${i}response`] = faq?.resposta  ?? '';\n  out[`q${i}url`]      = faq?.midia_url ?? '';\n}\n\nreturn [{ json: out }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-2864, 1984],
+      "id": "7e0128ed-0950-4ee0-91f8-756ed871a481",
+      "name": "GET EMPRESA"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "3ac20d87-70d8-4bd0-b74a-7de81b072d56",
+              "leftValue": "={{ $json.botativo }}",
+              "rightValue": "true",
+              "operator": {"type": "string", "operation": "equals", "name": "filter.operator.equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-2720, 1856],
+      "id": "f155365d-f59b-493a-853e-d9bb1ed8bf55",
+      "name": "BOT ATIVO?"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [-2512, 2032],
+      "id": "ba1449c8-0bf0-4fcc-8d33-8f69e63210b5",
+      "name": "BOT NOT ATIVO"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "5ddec918-2369-445c-8c62-796957a260cb",
+              "leftValue": "={{ $('GET HOK').item.json.status }}",
+              "rightValue": "SAUDACAO",
+              "operator": {"type": "string", "operation": "equals", "name": "filter.operator.equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-2256, 1840],
+      "id": "a39bb306-16ce-4987-b8db-9211a417a808",
+      "name": "CHECK SAUDACAO"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "78aabed3-fb82-4ac9-a749-230e64b80ffe",
+              "leftValue": "={{ $('GET EMPRESA').item.json.MSGSaudacaoactive }}",
+              "rightValue": "true",
+              "operator": {"type": "string", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-1984, 1744],
+      "id": "060175be-5a99-4681-b632-c78bbeef469c",
+      "name": "SAUDACAO ativa?1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c42f00f-0bd4-48fd-ae60-a30f09ab4b4c",
+              "name": "output",
+              "value": "={{ $('GET EMPRESA').item.json.MSGSaudacao.replace('[NOME CLIENTE]', $('GET HOK').item.json.nomeCliente || '') }}",
+              "type": "string"
+            },
+            {
+              "id": "cf3c8f0b-7402-498f-a88b-4bdcc2c76852",
+              "name": "urlimg",
+              "value": "={{ $('GET EMPRESA').item.json.MSGSaudacaourl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1488, 1472],
+      "id": "360093b3-c8e6-46d3-9b53-1c311b13ebed",
+      "name": "FAQ10 WELCOME1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('GET EMPRESA').item.json.quepasa_base_url }}/v3/bot/{{ $item(\"0\").$node[\"GET EMPRESA\"].json[\"quepasakey\"] }}/sendtext",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatid", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numCliente\"] }}"},
+            {"name": "text", "value": "={{ $json.output }}"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-1120, 1472],
+      "id": "14b3208f-ad65-49f0-895d-4f12270d43d4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "aa000004-1111-1111-1111-111111111111",
+              "leftValue": "={{ $('FAQ10 WELCOME1').item.json.urlimg }}",
+              "rightValue": "",
+              "operator": {"type": "string", "operation": "notEmpty", "singleValue": true}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-880, 1472],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567004",
+      "name": "SAUDACAO TEM MIDIA?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('GET EMPRESA').item.json.quepasa_base_url }}/v3/bot/{{ $('GET EMPRESA').item.json.quepasakey }}/sendurl",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatid", "value": "={{ $('GET HOK').item.json.numCliente }}"},
+            {"name": "url", "value": "={{ $('FAQ10 WELCOME1').item.json.urlimg }}"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-660, 1360],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567005",
+      "name": "HTTP SAUDACAO URL"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "cbf47416-26b4-4cf7-b6f7-2c779be7acc7",
+              "leftValue": "={{ $('GET HOK').item.json.numCliente }}",
+              "rightValue": "lid",
+              "operator": {"type": "string", "operation": "contains"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-400, 1472],
+      "id": "cd8b529f-688a-4ee5-bf05-573fb81e99a2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "rapdex_leads",
+        "filters": {
+          "conditions": [
+            {"keyName": "login", "keyValue": "={{ $('GET HOK').item.json.numEmpresa }}"},
+            {"keyName": "whatsapp_cli", "keyValue": "={{ $('GET HOK').item.json.numCliente.replace(/@.*/, '') }}"}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-128, 1456],
+      "id": "17dd1c66-0a88-444e-b46b-914d26bb60ce",
+      "name": "Get a row2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "rapdex_leads",
+        "filters": {
+          "conditions": [
+            {"keyName": "login", "keyValue": "={{ $('GET HOK').item.json.numEmpresa }}"},
+            {"keyName": "whatsapp_cli", "keyValue": "={{ $('GET HOK').item.json.numCliente.replace(/@.*/, '') }}"}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-128, 1712],
+      "id": "6b51da5f-4053-4d10-b67a-7f9f0befb1ae",
+      "name": "Get a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "rapdex_leads",
+        "filters": {
+          "conditions": [{"keyName": "id", "condition": "eq", "keyValue": "={{ $json.id }}"}]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {"fieldId": "question", "fieldValue": "BOAS VINDAS"},
+            {"fieldId": "whatsapp_cli", "fieldValue": "={{ $('HTTP Request').item.json.message.chatId }}"},
+            {"fieldId": "lid", "fieldValue": "={{ $('GET HOK').item.json.numCliente }}"}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [64, 1456],
+      "id": "3fb543a2-5e93-492f-a8a7-86f5b0aa4210",
+      "name": "Update a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "rapdex_leads",
+        "filters": {
+          "conditions": [{"keyName": "id", "condition": "eq", "keyValue": "={{ $json.id }}"}]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {"fieldId": "question", "fieldValue": "BOAS VINDAS"}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [64, 1712],
+      "id": "57498ad8-70c4-448f-bfb5-8c54f23880f4",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "be36f709-e0a6-413a-8b73-c0c0d136c623", "name": "msg", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msg\"] }}", "type": "string"},
+            {"id": "6df565cb-8aea-4c82-8e1a-bd510801b4a3", "name": "whatsapp", "value": "={{ $json.whatsapp_cli }}", "type": "string"},
+            {"id": "184f499f-d13d-4bd5-a11a-938b89163ab2", "name": "login", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numEmpresa\"] }}", "type": "string"},
+            {"id": "8b5b28ad-7071-474e-81df-7b4b63138212", "name": "msgtype", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msgType\"] }}", "type": "string"},
+            {"id": "04290765-27f8-4af0-9474-1e1cd658bcf9", "name": "token", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"quepasakey\"] }}", "type": "string"},
+            {"id": "c3005dd6-7828-47b2-815b-07912d36e034", "name": "msgID", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msgID\"] }}", "type": "string"},
+            {"id": "6cb1fa71-b60d-4830-9be0-de58812ec500", "name": "nomeCliente", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"nomeCliente\"] }}", "type": "string"},
+            {"id": "2fae06a5-4dd5-4262-9e08-fb7c1881524a", "name": "fromme", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"fromme\"] }}", "type": "string"},
+            {"id": "17ffdb3e-9edb-4b2a-b2c3-45804966fb92", "name": "rapdex", "value": "={{ $('FAQ10 WELCOME1').item.json.output }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 1552],
+      "id": "cdf776da-19ab-451e-a1ae-508f0e6b487a",
+      "name": "MSG FLT FINAL2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const empresa = $('GET EMPRESA').item.json;\nconst hok = $('GET HOK').item.json;\n\nconst mensagemOriginal = (hok.msg || '').trim();\n\nfunction normalize(str = '') {\n  return String(str)\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^\\p{L}\\p{N}\\s]/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction tokenize(str = '') {\n  return normalize(str).split(' ').filter(Boolean);\n}\n\nfunction isGreeting(text) {\n  const greetings = [\n    'oi', 'ola', 'oie', 'opa', 'bom dia', 'boa tarde', 'boa noite',\n    'e ai', 'olÃ¡', 'tem alguem ai', 'atendimento'\n  ];\n  const t = normalize(text);\n  return greetings.some(g => t === normalize(g));\n}\n\nfunction lcsLength(ta, tb) {\n  const m = ta.length, n = tb.length;\n  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));\n  for (let i = 1; i <= m; i++) {\n    for (let j = 1; j <= n; j++) {\n      dp[i][j] = ta[i-1] === tb[j-1]\n        ? dp[i-1][j-1] + 1\n        : Math.max(dp[i-1][j], dp[i][j-1]);\n    }\n  }\n  return dp[m][n];\n}\n\nfunction lcsScore(a, b) {\n  const ta = tokenize(a), tb = tokenize(b);\n  if (!ta.length || !tb.length) return 0;\n  return lcsLength(ta, tb) / Math.max(ta.length, tb.length);\n}\n\nfunction tokenCoverage(msg, trg) {\n  const tm = new Set(tokenize(msg));\n  const tt = new Set(tokenize(trg));\n  if (!tm.size) return 0;\n  let common = 0;\n  for (const tok of tm) if (tt.has(tok)) common++;\n  return common / tm.size;\n}\n\nfunction scoreIndividual(msg, trg) {\n  const mn = normalize(msg);\n  const tn = normalize(trg);\n  if (!mn || !tn) return 0;\n  if (mn === tn) return 1;\n  if (mn.length >= 4 && tn.includes(mn)) return 0.92;\n  if (tn.length >= 4 && mn.includes(tn)) return 0.95;\n  const lcs = lcsScore(mn, tn);\n  const cov = tokenCoverage(mn, tn);\n  return (lcs * 0.55) + (cov * 0.45);\n}\n\nfunction finalToScore(v) {\n  if (v >= 0.92) return 100;\n  if (v >= 0.75) return 94;\n  if (v >= 0.60) return 88;\n  if (v >= 0.48) return 80;\n  if (v >= 0.35) return 68;\n  if (v >= 0.22) return 52;\n  if (v >= 0.10) return 30;\n  return 0;\n}\n\nfunction scoreMatch(message, triggers, questionIndex) {\n  if (questionIndex === 5) {\n    const mn = normalize(message);\n    for (const trg of triggers) {\n      if (isGreeting(mn) && isGreeting(normalize(trg))) {\n        return { score: 98, trigger: trg };\n      }\n    }\n  }\n\n  const msgTokens = new Set(tokenize(normalize(message)));\n  const allTriggerTokens = new Set();\n  for (const trg of triggers) {\n    for (const tok of tokenize(normalize(trg))) allTriggerTokens.add(tok);\n  }\n\n  const globalCoverage = msgTokens.size > 0\n    ? [...msgTokens].filter(t => allTriggerTokens.has(t)).length / msgTokens.size\n    : 0;\n\n  let bestInd = 0;\n  let bestTrigger = '';\n  for (const trg of triggers) {\n    const s = scoreIndividual(message, trg);\n    if (s > bestInd) { bestInd = s; bestTrigger = trg; }\n  }\n\n  const finalScore = (bestInd * 0.7) + (globalCoverage * 0.3);\n\n  return { score: finalToScore(finalScore), trigger: bestTrigger };\n}\n\nconst results = [];\n\nfor (let i = 1; i <= 30; i++) {\n  const raw = (empresa[`q${i}`] || '').trim();\n  if (!raw) continue;\n\n  const triggers = raw.split('/').map(s => s.trim()).filter(Boolean);\n  const { score, trigger } = scoreMatch(mensagemOriginal, triggers, i);\n\n  results.push({ question: i, score, trigger_match: trigger });\n}\n\nresults.sort((a, b) => b.score - a.score);\n\nconst best = results[0] || { question: null, score: 0, trigger_match: '' };\n\nlet confidence = 'low';\nif (best.score >= 90) confidence = 'high';\nelse if (best.score >= 70) confidence = 'medium';\n\nreturn [\n  {\n    json: {\n      mensagem: mensagemOriginal,\n      best_question: best.question,\n      best_score: best.score,\n      best_trigger: best.trigger_match,\n      confidence,\n      ranking: results\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1568, 2064],
+      "id": "bc6a421f-1968-4278-97b5-85741d6de179",
+      "name": "CODE COM GATILHOS EXATOS"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('GET HOK').item.json.msg }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# Prompt do Classificador de IntenÃ§Ãµes\n\n```\nVocÃª Ã© um classificador de intenÃ§Ãµes. Sua funÃ§Ã£o Ã© avaliar o grau de correspondÃªncia entre a mensagem do usuÃ¡rio e as perguntas predefinidas.\n\nMENSAGEM DO USUÃRIO:\n{{ $('GET HOK').item.json.msg }}\n\nPERGUNTAS PREDEFINIDAS:\n1. {{ $('GET EMPRESA').item.json.q1 }}\n2. {{ $('GET EMPRESA').item.json.q2 }}\n3. {{ $('GET EMPRESA').item.json.q3 }}\n4. {{ $('GET EMPRESA').item.json.q4 }}\n5. {{ $('GET EMPRESA').item.json.q5 }}\n6. {{ $('GET EMPRESA').item.json.q6 }}\n7. {{ $('GET EMPRESA').item.json.q7 }}\n8. {{ $('GET EMPRESA').item.json.q8 }}\n9. {{ $('GET EMPRESA').item.json.q9 }}\n10.{{ $('GET EMPRESA').item.json.q10 }}\n11.{{ $('GET EMPRESA').item.json.q11 }}\n12.{{ $('GET EMPRESA').item.json.q12 }}\n13.{{ $('GET EMPRESA').item.json.q13 }}\n14.{{ $('GET EMPRESA').item.json.q14 }}\n15.{{ $('GET EMPRESA').item.json.q15 }}\n16.{{ $('GET EMPRESA').item.json.q16 }}\n17.{{ $('GET EMPRESA').item.json.q17 }}\n18.{{ $('GET EMPRESA').item.json.q18 }}\n19.{{ $('GET EMPRESA').item.json.q19 }}\n20.{{ $('GET EMPRESA').item.json.q20 }}\n\nINSTRUÃ‡ÃƒO:\nAnalise o grau de correspondÃªncia da mensagem do usuÃ¡rio com qualquer uma das perguntas predefinidas.\n\nCRITÃ‰RIOS DE AVALIAÃ‡ÃƒO:\n- 100: CorrespondÃªncia exata\n- 80-99: CorrespondÃªncia muito alta\n- 60-79: CorrespondÃªncia boa\n- 40-59: CorrespondÃªncia parcial\n- 20-39: CorrespondÃªncia fraca\n- 0-19: Nenhuma correspondÃªncia\n\nRESPOSTA OBRIGATÃ“RIA:\nResponda APENAS com o nÃºmero inteiro de 0 a 100.\n```"
+        }
+      },
+      "id": "5973a60c-d182-49b1-9410-a3213a210f5d",
+      "name": "IA MSG FILTER",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [-1584, 2224],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [-1584, 2432],
+      "id": "5d70a290-ed6a-4b55-87e9-a855d32768d2",
+      "name": "GPT FLT1",
+      "credentials": {
+        "openAiApi": {
+          "id": "8cUjN6yZM4ZLYUXL",
+          "name": "OpenAi SAMCOR"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [-1488, 2544],
+      "id": "c831620c-20b2-4a47-b78e-3e40b44ba759",
+      "name": "CL"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "82457a59-d932-4c84-9d00-cfc3d1771f6d", "name": "output", "value": "={{ $json.best_score }}", "type": "number"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1248, 2224],
+      "id": "e8a57595-ab7a-4e1e-a3d2-2c6c195dce28",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "f710c6f8-8afd-4b43-8d2e-63b6a7c218f4",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": 75,
+              "operator": {"type": "number", "operation": "gt"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-1056, 2224],
+      "id": "a1220311-3b00-4b6f-abf3-79e4ff2a25cd",
+      "name": "75%"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('GET HOK').item.json.msg }}",
+        "options": {
+          "systemMessage": "=# AGENTE 1 - IDENTIFICADOR DE RESPOSTAS\n\n```\nVocÃª Ã© um assistente que identifica e retorna respostas exatas baseadas em perguntas predefinidas.\n\nDADOS DO CLIENTE:\nNOME: {{ $('GET HOK').item.json.nomeCliente }}\n\nMENSAGEM DO USUÃRIO:\n{{ $('GET HOK').item.json.msg }}\n\nRESPOSTA CONSIDERADA MAIS PRÃ“XIMA: {{ $('CODE COM GATILHOS EXATOS').item.json.best_question }}\n\n## PERGUNTAS E RESPOSTAS PREDEFINIDAS:\n\n### 1.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q1 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q1response }}\n\n### 2.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q2 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q2response }}\n\n### 3.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q3 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q3response }}\n\n### 4.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q4 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q4response }}\n\n### 5.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q5 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q5response }}\n\n### 6.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q6 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q6response }}\n\n### 7.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q7 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q7response }}\n\n### 8.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q8 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q8response }}\n\n### 9.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q9 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q9response }}\n\n### 10.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q10 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q10response }}\n\n### 11.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q11 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q11response }}\n\n### 12.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q12 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q12response }}\n\n### 13.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q13 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q13response }}\n\n### 14.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q14 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q14response }}\n\n### 15.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q15 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q15response }}\n\n### 16.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q16 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q16response }}\n\n### 17.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q17 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q17response }}\n\n### 18.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q18 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q18response }}\n\n### 19.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q19 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q19response }}\n\n### 20.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q20 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q20response }}\n\n### 21.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q21 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q21response }}\n\n### 22.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q22 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q22response }}\n\n### 23.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q23 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q23response }}\n\n### 24.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q24 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q24response }}\n\n### 25.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q25 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q25response }}\n\n### 26.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q26 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q26response }}\n\n### 27.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q27 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q27response }}\n\n### 28.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q28 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q28response }}\n\n### 29.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q29 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q29response }}\n\n### 30.\n**Pergunta:** {{ $('GET EMPRESA').item.json.q30 }}\n**Resposta:** {{ $('GET EMPRESA').item.json.q30response }}\n\n## INSTRUÃ‡ÃƒO:\nIdentifique qual pergunta predefinida corresponde ou tem contexto muito prÃ³ximo Ã  mensagem do usuÃ¡rio.\n\n## REGRAS IMPORTANTES:\n1. Compare a mensagem do usuÃ¡rio com as perguntas predefinidas.\n2. Selecione a pergunta que tem o mesmo significado, contexto ou intenÃ§Ã£o.\n3. Retorne EXATAMENTE a resposta completa vinculada Ã  pergunta identificada.\n4. INCLUA TODO O CONTEÃšDO da resposta (texto + links + tudo).\n5. SUBSTITUA automaticamente [NOME CLIENTE] pelo nome real do cliente.\n6. NÃƒO adicione explicaÃ§Ãµes, comentÃ¡rios, emojis ou frases extras alÃ©m do que jÃ¡ estÃ¡ na resposta.\n7. Responda com TODA a resposta predefinida, incluindo links se houver.\n```\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [-464, 2096],
+      "id": "6bdcf12c-5444-4ffd-ba31-b415b548bb52",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [-448, 2320],
+      "id": "46034c4e-e8fb-4b06-b017-4d647a2d0767",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "8cUjN6yZM4ZLYUXL",
+          "name": "OpenAi SAMCOR"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "767e2410-e5eb-4974-b472-4f88d7b27d21", "name": "output", "value": "={{ $json.output }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-144, 2096],
+      "id": "8d01362f-b9c4-4446-85fd-fba784bf1471",
+      "name": "RESPOSTA RAPDEX"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "rapdex_conversations",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "login",
+              "condition": "eq",
+              "keyValue": "={{ $('GET HOK').item.json.numEmpresa }}"
+            },
+            {
+              "keyName": "whatsapp_cli",
+              "condition": "eq",
+              "keyValue": "={{ $('GET HOK').item.json.numCliente.replace(/@.*/, '') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [368, 2096],
+      "id": "f60c8411-a00f-4db4-9508-9c56db8ae95a",
+      "name": "BUSCA RESPOSTAS RAPDEX",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const normalize = str => (str || '')\n  .replace(/\\\\\\\\n/g, ' ')\n  .replace(/\\\\n/g, ' ')\n  .replace(/\\n/g, ' ')\n  .replace(/\\r/g, '')\n  .replace(/\\u00A0/g, ' ')\n  .replace(/\\u200B/g, '')\n  .replace(/[^\\p{L}\\p{N}\\p{Emoji} ]/gu, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nconst stripForComparison = str =>\n  str\n    .replace(/https?:\\/\\/\\S+/g, '')\n    .replace(/[*_~`]/g, '')\n    .replace(/R\\$\\s?[\\d.,]+/g, 'VALOR')\n    .toLowerCase();\n\nconst tokenize = str =>\n  stripForComparison(str)\n    .split(/[\\s\\n\\r,.;:!?*_~|()\\[\\]\"'\\-\\/]+/)\n    .filter(t => t.length >= 4);\n\nconst jaccard = (a, b) => {\n  const sa = new Set(a);\n  const sb = new Set(b);\n  const inter = [...sa].filter(t => sb.has(t)).length;\n  const union = new Set([...sa, ...sb]).size;\n  return union === 0 ? 0 : inter / union;\n};\n\nconst containment = (tokensA, tokensB) => {\n  const smaller = tokensA.length <= tokensB.length ? tokensA : tokensB;\n  const larger  = tokensA.length >  tokensB.length ? tokensA : tokensB;\n  const setLarger = new Set(larger);\n  const hits = smaller.filter(t => setLarger.has(t)).length;\n  return smaller.length === 0 ? 0 : hits / smaller.length;\n};\n\nconst JACCARD_THRESHOLD     = 0.72;\nconst CONTAINMENT_THRESHOLD = 0.85;\n\nconst parseData = str => str ? new Date(str) : null;\n\nlet output = '';\ntry {\n  output = normalize($('RESPOSTA RAPDEX').first().json.output);\n} catch(e) {\n  output = '';\n}\n\nconst rawRecords = $input.all().map(item => item.json);\nconst records = rawRecords.filter(r => r && r.id !== undefined);\n\nif (records.length === 0 || output === '') {\n  return [{\n    json: {\n      resultado: 'N',\n      debug_aviso: output === ''\n        ? 'âš ï¸ NÃ³ RESPOSTA RAPDEX sem output â€” liberando envio'\n        : 'âš ï¸ Supabase retornou vazio â€” liberando envio',\n      debug_total_registros: 0\n    }\n  }];\n}\n\nconst agora    = new Date();\nconst limite6h = new Date(agora.getTime() - 6 * 60 * 60 * 1000);\nconst opcoes = {\n  timeZone: 'America/Sao_Paulo', hour12: false,\n  year: 'numeric', month: '2-digit', day: '2-digit',\n  hour: '2-digit', minute: '2-digit'\n};\n\nconst registros6h = records.filter(r => {\n  const data = parseData(r.created_at);\n  return data && data >= limite6h;\n});\n\nconst outputTokens = tokenize(output);\n\nconst scored = registros6h.map(r => {\n  const respNorm   = normalize(r.resposta);\n  const respTokens = tokenize(respNorm);\n  const jScore     = jaccard(outputTokens, respTokens);\n  const cScore     = containment(outputTokens, respTokens);\n  const isDup      = jScore >= JACCARD_THRESHOLD || cScore >= CONTAINMENT_THRESHOLD;\n\n  return {\n    id:          r.id,\n    criadoem:    r.created_at,\n    jaccard:     Math.round(jScore * 100),\n    containment: Math.round(cScore * 100),\n    duplicata:   isDup,\n    resposta_preview: respNorm.substring(0, 60) + '...'\n  };\n});\n\nconst duplicatas = scored.filter(r => r.duplicata);\n\nreturn [{\n  json: {\n    resultado: duplicatas.length > 0 ? 'S' : 'N',\n    debug_agora_SP:         agora.toLocaleString('pt-BR', opcoes),\n    debug_limite_6h_SP:     limite6h.toLocaleString('pt-BR', opcoes),\n    debug_total_registros:  records.length,\n    debug_registros_bot_6h: registros6h.length,\n    debug_duplicatas:       duplicatas.length,\n    debug_aviso: duplicatas.length > 0\n      ? `âœ… DUPLICATA detectada (${duplicatas[0].jaccard}% Jaccard / ${duplicatas[0].containment}% containment) â€” bloquear envio`\n      : registros6h.length === 0\n        ? 'âš ï¸ Nenhum registro nas Ãºltimas 6h â€” liberando envio'\n        : 'âŒ Resposta suficientemente diferente â€” liberar envio',\n    debug_scores: scored\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 2096],
+      "id": "2fa3e1b9-16dc-476e-b7f1-56a4ed92c75e",
+      "name": "VERIFICA RESPOSTAS 24H"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "e601b4d6-e66e-42db-bac8-47378dc31ca3",
+              "leftValue": "={{ $json.resultado }}",
+              "rightValue": "S",
+              "operator": {"type": "string", "operation": "equals", "name": "filter.operator.equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [768, 2096],
+      "id": "3c835cb0-c86b-43c4-8c06-d1360391dbc0",
+      "name": "JA RESPONDIDA?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $('RESPOSTA RAPDEX').first().json.output;\n\nconst markdownLinkPattern = /\\[[^\\]]*\\]\\((https:\\/\\/rudtxgwzqrsvrdniqvav\\.supabase\\.co\\/[^)]+)\\)/g;\nconst plainUrlPattern = /https:\\/\\/rudtxgwzqrsvrdniqvav\\.supabase\\.co\\/[^\\s\\)\\]\\[;]+/g;\n\nlet allUrls = [];\nlet cleanedText = response;\n\nlet match;\nwhile ((match = markdownLinkPattern.exec(response)) !== null) {\n  allUrls.push(match[1]);\n}\ncleanedText = cleanedText.replace(markdownLinkPattern, '');\n\nwhile ((match = plainUrlPattern.exec(cleanedText)) !== null) {\n  allUrls.push(match[0]);\n}\ncleanedText = cleanedText.replace(plainUrlPattern, '');\n\ncleanedText = cleanedText.replace(/;+/g, '').replace(/\\n{3,}/g, '\\n\\n').trim();\n\nconst uniqueUrls = [...new Set(allUrls)];\nconst multipleLinks = uniqueUrls.length > 1;\nconst foundMedia = uniqueUrls.length > 0;\n\nconst urlFields = {};\nif (uniqueUrls.length === 0) {\n  urlFields.supabaseUrl1 = null;\n} else {\n  uniqueUrls.forEach((url, index) => {\n    urlFields[`supabaseUrl${index + 1}`] = url;\n  });\n}\n\nreturn [{\n  json: {\n    ...urlFields,\n    cleanedText,\n    foundMedia,\n    multipleLinks\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 2112],
+      "id": "698e06f7-b9af-4b2b-808d-3d70c2f4cc01",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $('RESPOSTA RAPDEX').first().json.output;\n\nconst supabasePattern = /https:\\/\\/rudtxgwzqrsvrdniqvav\\.supabase\\.co\\/[^\\s)\\]]+/g;\n\nconst supabaseUrls = response.match(supabasePattern) || [];\nconst uniqueUrls = [...new Set(supabaseUrls)];\n\nlet cleanedText = response.replace(supabasePattern, '').trim();\n\nreturn {\n  json: {\n    supabaseUrls: uniqueUrls,\n    cleanedText: cleanedText,\n    foundMedia: uniqueUrls.length > 0\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1024, 2304],
+      "id": "ebe4e2dd-9697-437e-83c0-bcf8eeabb1a0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "54301abe-20ed-4691-8d74-dc45229aa58b",
+              "leftValue": "={{ $json.multipleLinks }}",
+              "rightValue": true,
+              "operator": {"type": "boolean", "operation": "equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1408, 2112],
+      "id": "46408e7c-a8e6-4506-90ea-a81bca3b3520",
+      "name": "MULTIPLOS LINKS"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "4d617b13-4d21-4360-bfb8-21e6d9865dc3",
+              "leftValue": "={{ $json.foundMedia }}",
+              "rightValue": "",
+              "operator": {"type": "boolean", "operation": "true", "singleValue": true}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1760, 2464],
+      "id": "cdb4d603-0b9b-447d-9b0b-e0dd1ff58cd0",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "10092ef6-ce4e-4e98-99e5-5d35368de388", "name": "output", "value": "={{ $item(\"0\").$node[\"If5\"].json[\"cleanedText\"] }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2224, 2912],
+      "id": "b57545ad-b0f6-4be9-be6c-c4be7bf13188",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "767e2410-e5eb-4974-b472-4f88d7b27d21", "name": "output", "value": "={{ $json.output }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2640, 2912],
+      "id": "283c8cfb-e623-4a5d-b35f-5c9fbe3ad979",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "09b8361c-248b-4e41-a0b0-bbde0a86b473", "name": "url", "value": "={{ $json.supabaseUrl1 }}", "type": "string"},
+            {"id": "3bd357e3-7e8f-4899-a7b2-645605287eb2", "name": "whatsapp", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numCliente\"] }}", "type": "string"},
+            {"id": "d09c099e-e5c0-4dc0-b1ce-98bdf64ef7af", "name": "quepasakey", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"quepasakey\"] }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2208, 2464],
+      "id": "fcab92f3-b29f-4298-a330-25178e995974",
+      "name": "Edit Fields7"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('GET EMPRESA').item.json.quepasa_base_url }}/v3/bot/{{ $json.quepasakey }}/sendurl",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Accept", "value": "application/json"},
+            {"name": "X-QUEPASA-TRACKID", "value": "={{ $json.quepasakey }}"}
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatid", "value": "={{ $json.whatsapp }}"},
+            {"name": "url", "value": "={{ $json.url }}"}
+          ]
+        },
+        "options": {"redirect": {"redirect": {"followRedirects": false}}}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2416, 2464],
+      "id": "cfe76998-c4de-41be-9236-9ef542649ddf",
+      "name": "SEND URL",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "69ddf638-294f-450e-b59a-df1adcf0f220", "name": "output", "value": "={{ $('Code in JavaScript1').item.json.cleanedText }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2688, 2448],
+      "id": "cf1cf675-6c31-4a8b-93f6-dceb461f4a24",
+      "name": "Edit Fields8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "09b8361c-248b-4e41-a0b0-bbde0a86b473", "name": "url1", "value": "={{ $json.supabaseUrl1 }}", "type": "string"},
+            {"id": "7ff2dbca-7ddf-4236-afc2-cf3c971560ef", "name": "url2", "value": "={{ $json.supabaseUrl2 }}", "type": "string"},
+            {"id": "cfa56b29-a354-4d7e-9a66-f37bc6a113f3", "name": "url3", "value": "={{ $json.supabaseUrl3 }}", "type": "string"},
+            {"id": "3bd357e3-7e8f-4899-a7b2-645605287eb2", "name": "whatsapp", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numCliente\"] }}", "type": "string"},
+            {"id": "d09c099e-e5c0-4dc0-b1ce-98bdf64ef7af", "name": "quepasakey", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"quepasakey\"] }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1712, 2096],
+      "id": "e6fa7dde-7143-4650-a954-ca285b7cff11",
+      "name": "SET MULTIPLE"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('GET EMPRESA').item.json.quepasa_base_url }}/v3/bot/{{ $json.quepasakey }}/sendurl",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Accept", "value": "application/json"},
+            {"name": "X-QUEPASA-TRACKID", "value": "={{ $json.quepasakey }}"}
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatid", "value": "={{ $json.whatsapp }}"},
+            {"name": "url", "value": "={{ $json.url1 }}"}
+          ]
+        },
+        "options": {"redirect": {"redirect": {"followRedirects": false}}}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 2096],
+      "id": "266ece38-4d5a-4164-8014-0d0ebbc54359",
+      "name": "SEND URL1",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('GET EMPRESA').item.json.quepasa_base_url }}/v3/bot/{{ $('SET MULTIPLE').item.json.quepasakey }}/sendurl",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Accept", "value": "application/json"},
+            {"name": "X-QUEPASA-TRACKID", "value": "={{ $('SET MULTIPLE').item.json.quepasakey }}"}
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatid", "value": "={{ $('SET MULTIPLE').item.json.whatsapp }}"},
+            {"name": "url", "value": "={{ $('SET MULTIPLE').item.json.url2 }}"}
+          ]
+        },
+        "options": {"redirect": {"redirect": {"followRedirects": false}}}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 2000],
+      "id": "5ba5b690-d4c8-42ee-8c22-e7f9c2cd4931",
+      "name": "SEND URL2",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "f50b5747-23f6-4af9-b991-370355487fba",
+              "leftValue": "={{ $('SET MULTIPLE').item.json.url3 }}",
+              "rightValue": "",
+              "operator": {"type": "string", "operation": "exists", "singleValue": true}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2416, 1984],
+      "id": "2385b680-b3a4-41ff-8fac-8c3da7fe800a",
+      "name": "TEM 3 MÃDIAs?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('GET EMPRESA').item.json.quepasa_base_url }}/v3/bot/{{ $('SET MULTIPLE').item.json.quepasakey }}/sendurl",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Accept", "value": "application/json"},
+            {"name": "X-QUEPASA-TRACKID", "value": "={{ $('SET MULTIPLE').item.json.quepasakey }}"}
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatid", "value": "={{ $('SET MULTIPLE').item.json.whatsapp }}"},
+            {"name": "url", "value": "={{ $('SET MULTIPLE').item.json.url3 }}"}
+          ]
+        },
+        "options": {"redirect": {"redirect": {"followRedirects": false}}}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2672, 1952],
+      "id": "7288140f-9cbe-442e-9922-b0eb4e081fd7",
+      "name": "SEND URL3",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "4b430dd4-67bf-4f9f-b7c6-ba35d6ddae9b", "name": "output", "value": "={{ $('Code in JavaScript1').item.json.cleanedText }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2896, 2096],
+      "id": "fe33d34d-3ca7-485d-a1fc-5fb991ca62aa",
+      "name": "OUTPUT MULTIPLE"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "38d93c49-fe9c-4f34-89a1-5c3639f12095", "name": "output", "value": "={{ $json.output }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3200, 2208],
+      "id": "30487436-4b19-4dd3-b42b-92b4dd9952d7",
+      "name": "JUNTATUDU"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "47ba4439-c886-4b36-88bf-229530e5d50c",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {"type": "string", "operation": "empty", "singleValue": true}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [3360, 2208],
+      "id": "81b13f03-c816-4f28-ae7c-37e4d0a81f35",
+      "name": "If4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [3728, 2032],
+      "id": "77ed3206-227d-40c3-b66d-7bbe074f7abe",
+      "name": "No Operation, do nothing7"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('GET EMPRESA').item.json.quepasa_base_url }}/v3/bot/{{ $item(\"0\").$node[\"GET HOK\"].json[\"quepasakey\"] }}/sendtext",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatid", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numCliente\"] }}"},
+            {"name": "text", "value": "={{ $json.output }}"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3728, 2208],
+      "id": "2ad0b32a-726e-4131-bbd6-9e073545e24a",
+      "name": "HTTP Request6"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "be36f709-e0a6-413a-8b73-c0c0d136c623", "name": "msg", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msg\"] }}", "type": "string"},
+            {"id": "6df565cb-8aea-4c82-8e1a-bd510801b4a3", "name": "whatsapp", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numCliente\"] }}", "type": "string"},
+            {"id": "184f499f-d13d-4bd5-a11a-938b89163ab2", "name": "login", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numEmpresa\"] }}", "type": "string"},
+            {"id": "8b5b28ad-7071-474e-81df-7b4b63138212", "name": "msgtype", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msgType\"] }}", "type": "string"},
+            {"id": "04290765-27f8-4af0-9474-1e1cd658bcf9", "name": "token", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"quepasakey\"] }}", "type": "string"},
+            {"id": "c3005dd6-7828-47b2-815b-07912d36e034", "name": "msgID", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msgID\"] }}", "type": "string"},
+            {"id": "6cb1fa71-b60d-4830-9be0-de58812ec500", "name": "nomeCliente", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"nomeCliente\"] }}", "type": "string"},
+            {"id": "2fae06a5-4dd5-4262-9e08-fb7c1881524a", "name": "fromme", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"fromme\"] }}", "type": "string"},
+            {"id": "17ffdb3e-9edb-4b2a-b2c3-45804966fb92", "name": "rapdex", "value": "={{ $item(\"0\").$node[\"JUNTATUDU\"].json[\"output\"] }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [4112, 2208],
+      "id": "c318eac1-96ff-4805-a4c1-8f87009c6b30",
+      "name": "MSG FLT FINAL"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "8c42f00f-0bd4-48fd-ae60-a30f09ab4b4c", "name": "output", "value": "={{ $('GET HOK').item.json.msg }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-656, 2752],
+      "id": "1ec8c013-f15f-4f02-b2a9-5a542c9c0f2a",
+      "name": "Output"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+          "conditions": [
+            {
+              "id": "413abbd3-fdee-4a9c-9e5b-dbed525ce817",
+              "leftValue": "={{ $('GET EMPRESA').item.json.notificanumero }}",
+              "rightValue": "true",
+              "operator": {"type": "string", "operation": "equals", "name": "filter.operator.equals"}
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-400, 2752],
+      "id": "f03d00eb-874d-456f-9356-49497f856496",
+      "name": "Notifica Whatsapp2?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "2a56c2b3-012e-4ad4-978e-28d99ae32b2f", "name": "whatsapp2", "value": "=55{{ $('GET EMPRESA').item.json.whatsapp2.replace(/^\\+55\\s*/, '').replace(/\\D/g, '') }}@s.whatsapp.net", "type": "string"},
+            {"id": "7a13a0b6-88d6-4dbd-a060-e515ad20c21e", "name": "output", "value": "={{ $('GET HOK').item.json.msg }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-96, 2624],
+      "id": "f263547f-d849-4734-bb18-85b7f033a378",
+      "name": "MASK WHATSAPP2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('GET EMPRESA').item.json.quepasa_base_url }}/v3/bot/{{ $('GET EMPRESA').item.json.quepasakey }}/sendtext",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "chatid", "value": "={{ $json.whatsapp2 }}"},
+            {"name": "text", "value": "=ðŸš¨ ALERTA RAPDEX ðŸ¤–\n\nðŸ’¬ MSG: {{ $json.output }}\n\nðŸ“± NUMERO: {{ $('GET HOK').item.json.numCliente }}"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [128, 2624],
+      "id": "2b7c8039-21e1-48c4-b6cb-ff37f8504ccb",
+      "name": "HTTP Request7"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "be36f709-e0a6-413a-8b73-c0c0d136c623", "name": "msg", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msg\"] }}", "type": "string"},
+            {"id": "6df565cb-8aea-4c82-8e1a-bd510801b4a3", "name": "whatsapp", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numCliente\"] }}", "type": "string"},
+            {"id": "184f499f-d13d-4bd5-a11a-938b89163ab2", "name": "login", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"numEmpresa\"] }}", "type": "string"},
+            {"id": "8b5b28ad-7071-474e-81df-7b4b63138212", "name": "msgtype", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msgType\"] }}", "type": "string"},
+            {"id": "04290765-27f8-4af0-9474-1e1cd658bcf9", "name": "token", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"quepasakey\"] }}", "type": "string"},
+            {"id": "c3005dd6-7828-47b2-815b-07912d36e034", "name": "msgID", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"msgID\"] }}", "type": "string"},
+            {"id": "6cb1fa71-b60d-4830-9be0-de58812ec500", "name": "nomeCliente", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"nomeCliente\"] }}", "type": "string"},
+            {"id": "2fae06a5-4dd5-4262-9e08-fb7c1881524a", "name": "fromme", "value": "={{ $item(\"0\").$node[\"GET HOK\"].json[\"fromme\"] }}", "type": "string"},
+            {"id": "17ffdb3e-9edb-4b2a-b2c3-45804966fb92", "name": "rapdex", "value": "=sem resposta", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [192, 2896],
+      "id": "ab17bdf5-0618-4170-b12c-123984884d6e",
+      "name": "MSG FLT FINAL1"
+    },
+    {
+      "parameters": {"content": "## DADOS DA EMPRESA", "height": 500, "width": 880, "color": 4},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-3376, 1680],
+      "id": "482bd62c-fcd0-4d4f-9d6b-c1aab27804a3",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {"content": "## BOAS VINDAS", "height": 508, "width": 1984, "color": 4},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-1696, 1392],
+      "id": "1e1d5b70-4df2-48a2-b3dc-b973b40d3760",
+      "name": "Sticky Note17"
+    },
+    {
+      "parameters": {"content": "## AGENTE DE ENCAMINHAMENTO", "height": 860, "width": 904, "color": 5},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-1696, 1920],
+      "id": "748ec325-58f4-4adf-995c-96925c81568c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {"content": "## RESPOSTA FAQ10", "height": 580, "width": 1068, "color": 4},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-768, 1920],
+      "id": "b5ce9934-7100-4e04-915a-9965ed81d7b3",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {"content": "## FORA DO FAQ", "height": 564, "width": 1244, "color": 3},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-768, 2528],
+      "id": "007d576e-ea5e-4c8c-98d4-eece43e10374",
+      "name": "Sticky Note19"
+    },
+    {
+      "parameters": {"content": "## VERIFICA MSG 24H", "height": 588, "width": 1240, "color": 3},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [336, 1920],
+      "id": "9798459b-52d9-4403-aff3-c5cd7fe981a9",
+      "name": "Sticky Note28"
+    },
+    {
+      "parameters": {"content": "## ENVIA MULTIPLAS MEDIAS", "height": 428, "width": 1496, "color": 5},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1584, 1840],
+      "id": "c1a9b9e8-03d9-4c36-b1fe-a6897b1c7223",
+      "name": "Sticky Note29"
+    },
+    {
+      "parameters": {"content": "## ENVIA MEDIA", "height": 428, "width": 1496, "color": 3},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1584, 2288],
+      "id": "cf544a86-e20f-4f74-a20b-65dd2e79396d",
+      "name": "Sticky Note27"
+    },
+    {
+      "parameters": {"content": "## ENVIA SEM MEDIA", "height": 428, "width": 1496, "color": 4},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1584, 2736],
+      "id": "87724341-f751-4946-b4e9-fef17cc215d8",
+      "name": "Sticky Note30"
+    },
+    {
+      "parameters": {"content": "## JUNTA MENSAGENS", "height": 860, "width": 420, "color": 5},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [3104, 1920],
+      "id": "bff082cf-f447-4dc9-bbca-ef6605c9f185",
+      "name": "Sticky Note21"
+    },
+    {
+      "parameters": {"content": "## ENVIA TEXTO", "height": 860, "width": 440, "color": 4},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [3552, 1920],
+      "id": "65f0073b-f540-460f-b882-8aec3666c889",
+      "name": "Sticky Note22"
+    }
+  ],
+  "pinData": {
+    "IA MSG FILTER": [
+      {
+        "json": {
+          "output": "100"
+        }
+      }
+    ],
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "whatsapp": "5519997991463@s.whatsapp.net",
+          "msg": "Qual tempo de entrega?",
+          "login": "19997730303",
+          "msgtype": "text",
+          "token": "LGHQWKQFCJ",
+          "msgID": "AC9DD828EF71737165FBC8DD167EF014",
+          "nomeCliente": ".",
+          "fromme": "false",
+          "status": ""
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [[{"node": "GET HOK", "type": "main", "index": 0}]]
+    },
+    "GET HOK": {
+      "main": [[{"node": "DADOS CONTA", "type": "main", "index": 0}]]
+    },
+    "DADOS CONTA": {
+      "main": [[{"node": "GET SLOT", "type": "main", "index": 0}]]
+    },
+    "GET SLOT": {
+      "main": [[{"node": "GET FAQS", "type": "main", "index": 0}]]
+    },
+    "GET FAQS": {
+      "main": [[{"node": "GET EMPRESA", "type": "main", "index": 0}]]
+    },
+    "GET EMPRESA": {
+      "main": [[{"node": "BOT ATIVO?", "type": "main", "index": 0}]]
+    },
+    "BOT ATIVO?": {
+      "main": [
+        [{"node": "CHECK SAUDACAO", "type": "main", "index": 0}],
+        [{"node": "BOT NOT ATIVO", "type": "main", "index": 0}]
+      ]
+    },
+    "CHECK SAUDACAO": {
+      "main": [
+        [{"node": "SAUDACAO ativa?1", "type": "main", "index": 0}],
+        [{"node": "CODE COM GATILHOS EXATOS", "type": "main", "index": 0}]
+      ]
+    },
+    "SAUDACAO ativa?1": {
+      "main": [
+        [{"node": "FAQ10 WELCOME1", "type": "main", "index": 0}],
+        [{"node": "CODE COM GATILHOS EXATOS", "type": "main", "index": 0}]
+      ]
+    },
+    "FAQ10 WELCOME1": {
+      "main": [[{"node": "HTTP Request", "type": "main", "index": 0}]]
+    },
+    "HTTP Request": {
+      "main": [[{"node": "SAUDACAO TEM MIDIA?", "type": "main", "index": 0}]]
+    },
+    "SAUDACAO TEM MIDIA?": {
+      "main": [
+        [{"node": "HTTP SAUDACAO URL", "type": "main", "index": 0}],
+        [{"node": "If", "type": "main", "index": 0}]
+      ]
+    },
+    "HTTP SAUDACAO URL": {
+      "main": [[{"node": "If", "type": "main", "index": 0}]]
+    },
+    "If": {
+      "main": [
+        [{"node": "Get a row2", "type": "main", "index": 0}],
+        [{"node": "Get a row1", "type": "main", "index": 0}]
+      ]
+    },
+    "Get a row2": {
+      "main": [[{"node": "Update a row1", "type": "main", "index": 0}]]
+    },
+    "Get a row1": {
+      "main": [[{"node": "Update a row", "type": "main", "index": 0}]]
+    },
+    "Update a row1": {
+      "main": [[{"node": "MSG FLT FINAL2", "type": "main", "index": 0}]]
+    },
+    "Update a row": {
+      "main": [[{"node": "MSG FLT FINAL2", "type": "main", "index": 0}]]
+    },
+    "CODE COM GATILHOS EXATOS": {
+      "main": [[{"node": "Edit Fields3", "type": "main", "index": 0}]]
+    },
+    "IA MSG FILTER": {
+      "main": [[{"node": "Edit Fields3", "type": "main", "index": 0}]]
+    },
+    "GPT FLT1": {
+      "ai_languageModel": [[{"node": "IA MSG FILTER", "type": "ai_languageModel", "index": 0}]]
+    },
+    "CL": {
+      "ai_tool": [[{"node": "IA MSG FILTER", "type": "ai_tool", "index": 0}]]
+    },
+    "Edit Fields3": {
+      "main": [[{"node": "75%", "type": "main", "index": 0}]]
+    },
+    "75%": {
+      "main": [
+        [{"node": "AI Agent1", "type": "main", "index": 0}],
+        [{"node": "Output", "type": "main", "index": 0}]
+      ]
+    },
+    "AI Agent1": {
+      "main": [[{"node": "RESPOSTA RAPDEX", "type": "main", "index": 0}]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{"node": "AI Agent1", "type": "ai_languageModel", "index": 0}]]
+    },
+    "RESPOSTA RAPDEX": {
+      "main": [[{"node": "BUSCA RESPOSTAS RAPDEX", "type": "main", "index": 0}]]
+    },
+    "BUSCA RESPOSTAS RAPDEX": {
+      "main": [[{"node": "VERIFICA RESPOSTAS 24H", "type": "main", "index": 0}]]
+    },
+    "VERIFICA RESPOSTAS 24H": {
+      "main": [[{"node": "JA RESPONDIDA?", "type": "main", "index": 0}]]
+    },
+    "JA RESPONDIDA?": {
+      "main": [
+        [],
+        [{"node": "Code in JavaScript1", "type": "main", "index": 0}]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [[{"node": "MULTIPLOS LINKS", "type": "main", "index": 0}]]
+    },
+    "MULTIPLOS LINKS": {
+      "main": [
+        [{"node": "SET MULTIPLE", "type": "main", "index": 0}],
+        [{"node": "If5", "type": "main", "index": 0}]
+      ]
+    },
+    "SET MULTIPLE": {
+      "main": [[{"node": "SEND URL1", "type": "main", "index": 0}]]
+    },
+    "SEND URL1": {
+      "main": [[{"node": "SEND URL2", "type": "main", "index": 0}]]
+    },
+    "SEND URL2": {
+      "main": [[{"node": "TEM 3 MÃDIAs?", "type": "main", "index": 0}]]
+    },
+    "TEM 3 MÃDIAs?": {
+      "main": [
+        [{"node": "SEND URL3", "type": "main", "index": 0}],
+        [{"node": "OUTPUT MULTIPLE", "type": "main", "index": 0}]
+      ]
+    },
+    "SEND URL3": {
+      "main": [[{"node": "OUTPUT MULTIPLE", "type": "main", "index": 0}]]
+    },
+    "OUTPUT MULTIPLE": {
+      "main": [[{"node": "JUNTATUDU", "type": "main", "index": 0}]]
+    },
+    "If5": {
+      "main": [
+        [{"node": "Edit Fields7", "type": "main", "index": 0}],
+        [{"node": "Edit Fields5", "type": "main", "index": 0}]
+      ]
+    },
+    "Edit Fields7": {
+      "main": [[{"node": "SEND URL", "type": "main", "index": 0}]]
+    },
+    "SEND URL": {
+      "main": [[{"node": "Edit Fields8", "type": "main", "index": 0}]]
+    },
+    "Edit Fields8": {
+      "main": [[{"node": "JUNTATUDU", "type": "main", "index": 0}]]
+    },
+    "Edit Fields5": {
+      "main": [[{"node": "Edit Fields4", "type": "main", "index": 0}]]
+    },
+    "Edit Fields4": {
+      "main": [[{"node": "JUNTATUDU", "type": "main", "index": 0}]]
+    },
+    "JUNTATUDU": {
+      "main": [[{"node": "If4", "type": "main", "index": 0}]]
+    },
+    "If4": {
+      "main": [
+        [{"node": "No Operation, do nothing7", "type": "main", "index": 0}],
+        [{"node": "HTTP Request6", "type": "main", "index": 0}]
+      ]
+    },
+    "HTTP Request6": {
+      "main": [[{"node": "MSG FLT FINAL", "type": "main", "index": 0}]]
+    },
+    "Output": {
+      "main": [[{"node": "Notifica Whatsapp2?", "type": "main", "index": 0}]]
+    },
+    "Notifica Whatsapp2?": {
+      "main": [
+        [{"node": "MASK WHATSAPP2", "type": "main", "index": 0}],
+        [{"node": "MSG FLT FINAL1", "type": "main", "index": 0}]
+      ]
+    },
+    "MASK WHATSAPP2": {
+      "main": [[{"node": "HTTP Request7", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "40c7ea3ce2418744859ece7486ee17303eb766958e9ff2ac280d0cd75faf9607"
+  },
+  "tags": [
+    {
+      "updatedAt": "2025-12-30T19:13:37.765Z",
+      "createdAt": "2025-12-30T19:13:37.765Z",
+      "id": "uy77ASQooSdGMVn0",
+      "name": "RAPDEX"
+    },
+    {
+      "updatedAt": "2026-04-08T14:14:47.420Z",
+      "createdAt": "2026-04-08T14:14:47.420Z",
+      "id": "rnDPx94BZYa1m8Hn",
+      "name": "RAPDEX MATRIX"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "name": "RAPDEX — Notificador Pushover",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Entrada do Sub-Flow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pushover.net/1/messages.json",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={\n  \"token\":    \"ad1fqymffr4bxo7unb2gdew9k43vt9\",\n  \"user\":     \"ugsyoieaa8hvr2d8w9bbr2f6cvbe5e\",\n  \"title\":    {{ JSON.stringify($json.title    ?? 'RAPDEX') }},\n  \"message\":  {{ JSON.stringify($json.message  ?? '') }},\n  \"priority\": {{ $json.priority ?? 0 }},\n  \"sound\":    {{ JSON.stringify($json.sound    ?? 'pushover') }}\n}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Pushover API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "Entrada do Sub-Flow": {
+      "main": [
+        [
+          {
+            "node": "Pushover API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

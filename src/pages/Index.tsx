@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { LoginPage } from "@/components/LoginPage";
-import OnboardingFlow from "@/components/OnboardingFlow";
 import { Dashboard } from "@/components/Dashboard";
 import { supabase } from "@/integrations/supabase/client";
 import type { Account, Faq } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 // Mantém a interface que Dashboard.tsx espera (campo legado mapeado do novo schema)
 export interface UserData {
@@ -71,7 +71,7 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (credentials: { login: string; password: string }) => {
     setLoading(true);
@@ -129,21 +129,12 @@ const Index = () => {
     window.location.reload();
   };
 
-  if (showOnboarding) {
-    return (
-      <OnboardingFlow
-        onComplete={() => setShowOnboarding(false)}
-        onBack={() => setShowOnboarding(false)}
-      />
-    );
-  }
-
   if (!isAuthenticated) {
     return (
       <LoginPage
         onLogin={handleLogin}
         loading={loading}
-        onNewRegister={() => setShowOnboarding(true)}
+        onNewRegister={() => navigate("/novo")}
       />
     );
   }

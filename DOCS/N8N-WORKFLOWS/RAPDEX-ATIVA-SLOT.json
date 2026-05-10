@@ -1,0 +1,268 @@
+﻿{
+  "name": "RAPDEX ATIVA SLOT",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "rapdex-ativa-slot",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 400],
+      "id": "as001-0000-0000-0000-000000000001",
+      "name": "WEBHOOK ATIVA SLOT",
+      "webhookId": "rapdex-ativa-slot-v1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as-in-01",
+              "name": "quepasakey",
+              "value": "={{ $json.body?.quepasakey ?? $json.quepasakey }}",
+              "type": "string"
+            },
+            {
+              "id": "as-in-02",
+              "name": "login",
+              "value": "={{ $json.body?.login ?? $json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "as-in-03",
+              "name": "n8n_hok_url",
+              "value": "={{ $json.body?.n8n_hok_url ?? $json.n8n_hok_url }}",
+              "type": "string"
+            },
+            {
+              "id": "as-in-04",
+              "name": "trial_dias",
+              "value": "={{ $json.body?.trial_dias ?? $json.trial_dias ?? 7 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 400],
+      "id": "as002-0000-0000-0000-000000000002",
+      "name": "SET INPUT"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "rapdex_slots",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quepasa_key",
+              "keyValue": "={{ $json.quepasakey }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [720, 400],
+      "id": "as003-0000-0000-0000-000000000003",
+      "name": "GET SLOT",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "slot-check-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "slot-check-status",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "active",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [960, 400],
+      "id": "as004-0000-0000-0000-000000000004",
+      "name": "SLOT LIVRE?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.quepasa_base_url }}/v3/bot/{{ $('SET INPUT').item.json.quepasakey }}/webhook",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-QUEPASA-USER",
+              "value": "access@maistempoai.com.br"
+            },
+            {
+              "name": "X-QUEPASA-TOKEN",
+              "value": "={{ $('SET INPUT').item.json.quepasakey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $('SET INPUT').item.json.n8n_hok_url }}?quepasakey={{ $('SET INPUT').item.json.quepasakey }}\",\n  \"forwardinternal\": false,\n  \"extra\": {\n    \"optional\": \"ok\"\n  }\n}",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 280],
+      "id": "as005-0000-0000-0000-000000000005",
+      "name": "ADD HOK",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('SET INPUT').item.json;\nconst dias = Number(input.trial_dias) || 7;\nconst agora = new Date();\nconst expira = new Date(agora.getTime() + dias * 24 * 60 * 60 * 1000);\n\nreturn [{\n  json: {\n    quepasakey:       input.quepasakey,\n    login:            input.login,\n    n8n_hok_url:      input.n8n_hok_url,\n    trial_expires_at: expira.toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 280],
+      "id": "as006-0000-0000-0000-000000000006",
+      "name": "SET TRIAL"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "rapdex_slots",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "quepasa_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.quepasakey }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {"fieldId": "login",            "fieldValue": "={{ $json.login }}"},
+            {"fieldId": "n8n_hok_url",      "fieldValue": "={{ $json.n8n_hok_url }}"},
+            {"fieldId": "status",           "fieldValue": "active"},
+            {"fieldId": "trial_expires_at", "fieldValue": "={{ $json.trial_expires_at }}"}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1680, 280],
+      "id": "as007-0000-0000-0000-000000000007",
+      "name": "UPDATE SLOT",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, quepasakey: $json.quepasa_key, login: $json.login, status: $json.status, trial_expires_at: $json.trial_expires_at }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1920, 280],
+      "id": "as008-0000-0000-0000-000000000008",
+      "name": "RESPOND OK"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: 'Slot ' + $('SET INPUT').item.json.quepasakey + ' nÃ£o encontrado ou jÃ¡ estÃ¡ ativo' }) }}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 560],
+      "id": "as009-0000-0000-0000-000000000009",
+      "name": "RESPOND ERRO"
+    }
+  ],
+  "connections": {
+    "WEBHOOK ATIVA SLOT": {
+      "main": [[{"node": "SET INPUT", "type": "main", "index": 0}]]
+    },
+    "SET INPUT": {
+      "main": [[{"node": "GET SLOT", "type": "main", "index": 0}]]
+    },
+    "GET SLOT": {
+      "main": [[{"node": "SLOT LIVRE?", "type": "main", "index": 0}]]
+    },
+    "SLOT LIVRE?": {
+      "main": [
+        [{"node": "ADD HOK", "type": "main", "index": 0}],
+        [{"node": "RESPOND ERRO", "type": "main", "index": 0}]
+      ]
+    },
+    "ADD HOK": {
+      "main": [[{"node": "SET TRIAL", "type": "main", "index": 0}]]
+    },
+    "SET TRIAL": {
+      "main": [[{"node": "UPDATE SLOT", "type": "main", "index": 0}]]
+    },
+    "UPDATE SLOT": {
+      "main": [[{"node": "RESPOND OK", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "40c7ea3ce2418744859ece7486ee17303eb766958e9ff2ac280d0cd75faf9607"
+  }
+}

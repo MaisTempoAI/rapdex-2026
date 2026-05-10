@@ -1,5 +1,4 @@
 const N8N = process.env.N8N_BASE_URL || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
-const { notificar } = require('./lib/pushover');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -12,37 +11,28 @@ exports.handler = async (event) => {
 
   try {
     const payload = JSON.parse(event.body || '{}');
-    console.log('[cadastro] payload recebido:', JSON.stringify({ celular: payload.celular, nome: payload.nome_empresa, token: payload.token ? 'SIM' : 'NAO' }));
 
-    const res = await fetch(`${N8N}/webhook/rapdex-perguntas-onboarding`, {
+    const res = await fetch(`${N8N}/webhook/rapdex-forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const text = await res.text();
-    console.log('[cadastro] resposta N8N:', res.status, text.substring(0, 300));
 
+    const text = await res.text();
     let data = {};
     try { data = JSON.parse(text); } catch { data = { ok: false, raw: text }; }
 
-    // Notifica Pushover SOMENTE após confirmação do N8N
-    if (data.ok) {
-      await notificar({
-        title: '✅ Novo Cliente Cadastrado',
-        message: `${payload.nome_empresa || 'Cliente'} (${payload.celular || '?'}) concluiu o cadastro!`,
-      });
-    }
-
     return {
-      statusCode: 200,
+      statusCode: res.status,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     };
   } catch (err) {
+    console.error('[forgot-password] erro:', err.message);
     return {
       statusCode: 502,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ok: false, error: 'n8n_indisponivel' }),
+      body: JSON.stringify({ ok: false, error: 'Servidor indisponível.' }),
     };
   }
 };

@@ -1,0 +1,1004 @@
+﻿{
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "rapdex_leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "whatsapp_cli",
+              "keyValue": "={{ $('GET HOK').item.json.numCliente.replace(/@.*/, '') }}"
+            },
+            {
+              "keyName": "login",
+              "keyValue": "={{ $('GET HOK').item.json.numEmpresa }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        512,
+        -208
+      ],
+      "id": "17b335bc-09b9-42d8-976e-2854f1501445",
+      "name": "GET CLIENTE",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7f502f66-4bce-4028-b02a-be7683a8ff85",
+              "leftValue": "={{ $json.whatsapp_cli }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        -208
+      ],
+      "id": "937dc0b3-2738-4f31-bcce-be78aee232b9",
+      "name": "VERIFICA CLIENTE CADASTRADO"
+    },
+    {
+      "parameters": {
+        "content": "## CADASTRO DE CLIENTE",
+        "height": 360,
+        "width": 1120,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        416,
+        -304
+      ],
+      "id": "42fa96be-8a19-4aa9-831e-436c1f0cf158",
+      "name": "Sticky Note17"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "whatsapp"
+            },
+            {
+              "name": "msg"
+            },
+            {
+              "name": "login"
+            },
+            {
+              "name": "msgtype"
+            },
+            {
+              "name": "token"
+            },
+            {
+              "name": "msgID"
+            },
+            {
+              "name": "nomeCliente"
+            },
+            {
+              "name": "fromme"
+            },
+            {
+              "name": "lid"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -64,
+        -208
+      ],
+      "id": "3f85b333-868b-46a1-85cc-b1d1fded431c",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b234b710-c6a4-4b3d-ac59-3dd017de9a5e",
+              "name": "quepasakey",
+              "value": "={{ $json.token }}",
+              "type": "string"
+            },
+            {
+              "id": "793f75c1-db43-422a-bb4e-492093587c80",
+              "name": "fromme",
+              "value": "={{ $json.fromme }}",
+              "type": "string"
+            },
+            {
+              "id": "171ebe9f-5090-4a73-a9f5-6cc0572abdd7",
+              "name": "numCliente",
+              "value": "={{ $json.whatsapp }}",
+              "type": "string"
+            },
+            {
+              "id": "6b0b6927-74d0-4251-a90a-92edc3d24e5a",
+              "name": "numEmpresa",
+              "value": "={{ $json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "85880756-ef88-4546-915f-170ec03e295f",
+              "name": "nomeCliente",
+              "value": "={{ $json.nomeCliente }}",
+              "type": "string"
+            },
+            {
+              "id": "206fa49b-acfd-498a-8133-9e43022a8850",
+              "name": "msg",
+              "value": "={{ $json.msg }}",
+              "type": "string"
+            },
+            {
+              "id": "4c3b5754-9f05-49c5-afd9-4756d6c2b692",
+              "name": "msgType",
+              "value": "={{ $json.msgtype }}",
+              "type": "string"
+            },
+            {
+              "id": "576e178e-81b3-451b-abed-ba55c6383b91",
+              "name": "msgID",
+              "value": "={{ $json.msgID }}",
+              "type": "string"
+            },
+            {
+              "id": "7cf3452e-87fc-4fe7-b18f-2687439aed3d",
+              "name": "horaAtual",
+              "value": "={{ $now.setZone('America/Sao_Paulo').setLocale('pt-BR').toFormat('DDDD | HH:mm:ss') }}",
+              "type": "string"
+            },
+            {
+              "id": "494fe45a-456f-46d2-ab03-dba57bfe69d3",
+              "name": "NUMERO",
+              "value": "={{ Math.floor(100000 + Math.random() * 900000) }}",
+              "type": "string"
+            },
+            {
+              "id": "60217e95-4e68-4f2c-8d48-6e8aed3f79e0",
+              "name": "delay",
+              "value": 3500,
+              "type": "number"
+            },
+            {
+              "id": "ec2f13a0-57d0-42c1-beeb-0deb353d5406",
+              "name": "supabase",
+              "value": "={{ $json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "62e5651a-34f7-489b-ba2f-aa3a9151ba32",
+              "name": "lid",
+              "value": "={{ $json.lid }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        -208
+      ],
+      "id": "61b76e6b-c25b-4edf-b3e9-6f0e785ed795",
+      "name": "GET HOK"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "af7ce225-bd0b-4e39-bd27-1c42aaaf55c2",
+              "leftValue": "={{ String($json.bot_ativo) }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1024,
+        -224
+      ],
+      "id": "581fc0c7-bb36-45b2-b91d-97789fa22947",
+      "name": "BOT ATIVO cliente?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "be36f709-e0a6-413a-8b73-c0c0d136c623",
+              "name": "msg",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msg }}",
+              "type": "string"
+            },
+            {
+              "id": "6df565cb-8aea-4c82-8e1a-bd510801b4a3",
+              "name": "whatsapp",
+              "value": "={{ $('When Executed by Another Workflow').item.json.whatsapp }}",
+              "type": "string"
+            },
+            {
+              "id": "184f499f-d13d-4bd5-a11a-938b89163ab2",
+              "name": "login",
+              "value": "={{ $('When Executed by Another Workflow').item.json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "8b5b28ad-7071-474e-81df-7b4b63138212",
+              "name": "msgtype",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgtype }}",
+              "type": "string"
+            },
+            {
+              "id": "04290765-27f8-4af0-9474-1e1cd658bcf9",
+              "name": "token",
+              "value": "={{ $('When Executed by Another Workflow').item.json.token }}",
+              "type": "string"
+            },
+            {
+              "id": "c3005dd6-7828-47b2-815b-07912d36e034",
+              "name": "msgID",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgID }}",
+              "type": "string"
+            },
+            {
+              "id": "6cb1fa71-b60d-4830-9be0-de58812ec500",
+              "name": "nomeCliente",
+              "value": "={{ $('When Executed by Another Workflow').item.json.nomeCliente }}",
+              "type": "string"
+            },
+            {
+              "id": "2fae06a5-4dd5-4262-9e08-fb7c1881524a",
+              "name": "fromme",
+              "value": "={{ $('When Executed by Another Workflow').item.json.fromme }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-0001-0000-0000-000000000001",
+              "name": "question",
+              "value": "={{ $json.question }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2064,
+        -144
+      ],
+      "id": "05a4e698-dc82-41c3-b6fa-8740dec0e7dd",
+      "name": "MSG FLT FINAL"
+    },
+    {
+      "parameters": {
+        "tableId": "rapdex_leads",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $('GET HOK').item.json.nomeCliente }}"
+            },
+            {
+              "fieldId": "whatsapp_cli",
+              "fieldValue": "={{ $('GET HOK').item.json.numCliente.replace(/@.*/, '') }}"
+            },
+            {
+              "fieldId": "bot_ativo",
+              "fieldValue": "true"
+            },
+            {
+              "fieldId": "login",
+              "fieldValue": "={{ $('GET HOK').item.json.numEmpresa }}"
+            },
+            {
+              "fieldId": "question",
+              "fieldValue": "SAUDACAO"
+            },
+            {
+              "fieldId": "lid",
+              "fieldValue": "={{ $('GET HOK').item.json.lid }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        288
+      ],
+      "id": "01be66bc-269f-4621-ba88-f798861db2ea",
+      "name": "Supabase4",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1982e552-ae0d-47fb-86b4-dd03c09ecb3e",
+              "leftValue": "={{ $('GET HOK').item.json.numCliente }}",
+              "rightValue": "@lid",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        224
+      ],
+      "id": "f7c05950-5ac3-4922-81e6-962ae4d32ffc",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "content": "## CADASTRO DE CLIENTE â€” LID PATH",
+        "height": 568,
+        "width": 1120,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        416,
+        80
+      ],
+      "id": "ed24f9a7-4128-4429-af3e-022dcb61574e",
+      "name": "Sticky Note18"
+    },
+    {
+      "parameters": {
+        "tableId": "rapdex_leads",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "login",
+              "fieldValue": "={{ $('GET HOK').item.json.numEmpresa }}"
+            },
+            {
+              "fieldId": "bot_ativo",
+              "fieldValue": "true"
+            },
+            {
+              "fieldId": "whatsapp_cli",
+              "fieldValue": "={{ $('GET HOK').item.json.numCliente.replace(/@.*/, '') }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $('GET HOK').item.json.nomeCliente }}"
+            },
+            {
+              "fieldId": "question",
+              "fieldValue": "SAUDACAO"
+            },
+            {
+              "fieldId": "lid",
+              "fieldValue": "={{ $('GET HOK').item.json.numCliente }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        704,
+        448
+      ],
+      "id": "926a3d48-2d06-468b-90af-6ec25a790fcb",
+      "name": "Create a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "be36f709-e0a6-413a-8b73-c0c0d136c623",
+              "name": "msg",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msg }}",
+              "type": "string"
+            },
+            {
+              "id": "6df565cb-8aea-4c82-8e1a-bd510801b4a3",
+              "name": "whatsapp",
+              "value": "={{ $('When Executed by Another Workflow').item.json.whatsapp }}",
+              "type": "string"
+            },
+            {
+              "id": "184f499f-d13d-4bd5-a11a-938b89163ab2",
+              "name": "login",
+              "value": "={{ $('When Executed by Another Workflow').item.json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "8b5b28ad-7071-474e-81df-7b4b63138212",
+              "name": "msgtype",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgtype }}",
+              "type": "string"
+            },
+            {
+              "id": "04290765-27f8-4af0-9474-1e1cd658bcf9",
+              "name": "token",
+              "value": "={{ $('When Executed by Another Workflow').item.json.token }}",
+              "type": "string"
+            },
+            {
+              "id": "c3005dd6-7828-47b2-815b-07912d36e034",
+              "name": "msgID",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgID }}",
+              "type": "string"
+            },
+            {
+              "id": "6cb1fa71-b60d-4830-9be0-de58812ec500",
+              "name": "nomeCliente",
+              "value": "={{ $('When Executed by Another Workflow').item.json.nomeCliente }}",
+              "type": "string"
+            },
+            {
+              "id": "2fae06a5-4dd5-4262-9e08-fb7c1881524a",
+              "name": "fromme",
+              "value": "={{ $('When Executed by Another Workflow').item.json.fromme }}",
+              "type": "string"
+            },
+            {
+              "id": "1983faa5-1061-4d86-9c75-2d5eb6bee04b",
+              "name": "lid",
+              "value": "={{ $('GET HOK').item.json.lid }}",
+              "type": "string"
+            },
+            {
+              "id": "7c5545aa-5bfe-448f-b7c3-376994f47fb3",
+              "name": "question",
+              "value": "={{ $json.question }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2064,
+        448
+      ],
+      "id": "8b5e7c09-7570-4c40-8e45-3e7ca6d82bc1",
+      "name": "MSG FLT FINAL1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "rapdex_leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lid",
+              "keyValue": "={{ $('GET HOK').item.json.numCliente }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        704,
+        144
+      ],
+      "id": "09889da3-d344-4cd5-8b09-9257f24cb43b",
+      "name": "Get a row",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "DgrvFLRnv3scr06r",
+          "name": "RAPDEX SUPABASE"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "be36f709-e0a6-413a-8b73-c0c0d136c623",
+              "name": "msg",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msg }}",
+              "type": "string"
+            },
+            {
+              "id": "6df565cb-8aea-4c82-8e1a-bd510801b4a3",
+              "name": "whatsapp",
+              "value": "={{ $json.whatsapp_cli }}",
+              "type": "string"
+            },
+            {
+              "id": "184f499f-d13d-4bd5-a11a-938b89163ab2",
+              "name": "login",
+              "value": "={{ $('When Executed by Another Workflow').item.json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "8b5b28ad-7071-474e-81df-7b4b63138212",
+              "name": "msgtype",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgtype }}",
+              "type": "string"
+            },
+            {
+              "id": "04290765-27f8-4af0-9474-1e1cd658bcf9",
+              "name": "token",
+              "value": "={{ $('When Executed by Another Workflow').item.json.token }}",
+              "type": "string"
+            },
+            {
+              "id": "c3005dd6-7828-47b2-815b-07912d36e034",
+              "name": "msgID",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgID }}",
+              "type": "string"
+            },
+            {
+              "id": "6cb1fa71-b60d-4830-9be0-de58812ec500",
+              "name": "nomeCliente",
+              "value": "={{ $('When Executed by Another Workflow').item.json.nomeCliente }}",
+              "type": "string"
+            },
+            {
+              "id": "2fae06a5-4dd5-4262-9e08-fb7c1881524a",
+              "name": "fromme",
+              "value": "={{ $('When Executed by Another Workflow').item.json.fromme }}",
+              "type": "string"
+            },
+            {
+              "id": "f3f9c43a-431f-4360-8d63-d14f8cc29acd",
+              "name": "lid",
+              "value": "={{ $json.lid }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b2c3d4-0002-0000-0000-000000000002",
+              "name": "question",
+              "value": "={{ $json.question }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2064,
+        16
+      ],
+      "id": "81212bae-02a3-48f3-8378-d3a6a6b69d83",
+      "name": "MSG FLT FINAL2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "766db869-3410-40fb-97cf-dbe6cf76cf56",
+              "leftValue": "={{ $json.nome }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        912,
+        144
+      ],
+      "id": "1a7c3bc1-c701-409c-bce6-64aa8f454daa",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "be36f709-e0a6-413a-8b73-c0c0d136c623",
+              "name": "msg",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msg }}",
+              "type": "string"
+            },
+            {
+              "id": "6df565cb-8aea-4c82-8e1a-bd510801b4a3",
+              "name": "whatsapp",
+              "value": "={{ $json.whatsapp_cli }}",
+              "type": "string"
+            },
+            {
+              "id": "184f499f-d13d-4bd5-a11a-938b89163ab2",
+              "name": "login",
+              "value": "={{ $('When Executed by Another Workflow').item.json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "8b5b28ad-7071-474e-81df-7b4b63138212",
+              "name": "msgtype",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgtype }}",
+              "type": "string"
+            },
+            {
+              "id": "04290765-27f8-4af0-9474-1e1cd658bcf9",
+              "name": "token",
+              "value": "={{ $('When Executed by Another Workflow').item.json.token }}",
+              "type": "string"
+            },
+            {
+              "id": "c3005dd6-7828-47b2-815b-07912d36e034",
+              "name": "msgID",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgID }}",
+              "type": "string"
+            },
+            {
+              "id": "6cb1fa71-b60d-4830-9be0-de58812ec500",
+              "name": "nomeCliente",
+              "value": "={{ $('When Executed by Another Workflow').item.json.nomeCliente }}",
+              "type": "string"
+            },
+            {
+              "id": "2fae06a5-4dd5-4262-9e08-fb7c1881524a",
+              "name": "fromme",
+              "value": "={{ $('When Executed by Another Workflow').item.json.fromme }}",
+              "type": "string"
+            },
+            {
+              "id": "f3f9c43a-431f-4360-8d63-d14f8cc29acd",
+              "name": "lid",
+              "value": "={{ $json.lid }}",
+              "type": "string"
+            },
+            {
+              "id": "0af74ca6-6f9a-49de-ad31-4afcf8a66738",
+              "name": "question",
+              "value": "={{ $json.question }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2064,
+        176
+      ],
+      "id": "1f27fc22-601a-4b3e-b868-f38ba11b7727",
+      "name": "MSG FLT FINAL3"
+    },
+    {
+      "parameters": {
+        "content": "## SEND",
+        "height": 952,
+        "width": 1120,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        -304
+      ],
+      "id": "e86f78b0-dbee-410c-9452-b8f736e93c92",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "be36f709-e0a6-413a-8b73-c0c0d136c623",
+              "name": "msg",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msg }}",
+              "type": "string"
+            },
+            {
+              "id": "6df565cb-8aea-4c82-8e1a-bd510801b4a3",
+              "name": "whatsapp",
+              "value": "={{ $('When Executed by Another Workflow').item.json.whatsapp }}",
+              "type": "string"
+            },
+            {
+              "id": "184f499f-d13d-4bd5-a11a-938b89163ab2",
+              "name": "login",
+              "value": "={{ $('When Executed by Another Workflow').item.json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "8b5b28ad-7071-474e-81df-7b4b63138212",
+              "name": "msgtype",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgtype }}",
+              "type": "string"
+            },
+            {
+              "id": "04290765-27f8-4af0-9474-1e1cd658bcf9",
+              "name": "token",
+              "value": "={{ $('When Executed by Another Workflow').item.json.token }}",
+              "type": "string"
+            },
+            {
+              "id": "c3005dd6-7828-47b2-815b-07912d36e034",
+              "name": "msgID",
+              "value": "={{ $('When Executed by Another Workflow').item.json.msgID }}",
+              "type": "string"
+            },
+            {
+              "id": "6cb1fa71-b60d-4830-9be0-de58812ec500",
+              "name": "nomeCliente",
+              "value": "={{ $('When Executed by Another Workflow').item.json.nomeCliente }}",
+              "type": "string"
+            },
+            {
+              "id": "2fae06a5-4dd5-4262-9e08-fb7c1881524a",
+              "name": "fromme",
+              "value": "={{ $('When Executed by Another Workflow').item.json.fromme }}",
+              "type": "string"
+            },
+            {
+              "id": "86be7203-c182-4282-9c39-401d75cf446c",
+              "name": "status",
+              "value": "BOTOFF",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2064,
+        -304
+      ],
+      "id": "8960cea1-bbc9-4241-b4a5-542b20e9cad0",
+      "name": "MSG FLT FINAL4"
+    }
+  ],
+  "connections": {
+    "GET CLIENTE": {
+      "main": [
+        [
+          {
+            "node": "VERIFICA CLIENTE CADASTRADO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICA CLIENTE CADASTRADO": {
+      "main": [
+        [
+          {
+            "node": "BOT ATIVO cliente?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "GET HOK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET HOK": {
+      "main": [
+        [
+          {
+            "node": "GET CLIENTE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BOT ATIVO cliente?": {
+      "main": [
+        [
+          {
+            "node": "MSG FLT FINAL4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MSG FLT FINAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase4": {
+      "main": [
+        [
+          {
+            "node": "MSG FLT FINAL3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Get a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row1": {
+      "main": [
+        [
+          {
+            "node": "MSG FLT FINAL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "MSG FLT FINAL2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "40c7ea3ce2418744859ece7486ee17303eb766958e9ff2ac280d0cd75faf9607"
+  }
+}
