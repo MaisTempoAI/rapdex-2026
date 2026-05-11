@@ -21,7 +21,7 @@ git commit -m "mensagem"
 git push origin main
 ```
 
-O Netlify está conectado ao GitHub — push no `main` dispara deploy automático em **rapdex.netlify.app**.
+O Vercel está conectado ao GitHub — push no `main` dispara deploy automático em **rapdex-2026.vercel.app**.
 
 ---
 
@@ -29,13 +29,13 @@ O Netlify está conectado ao GitHub — push no `main` dispara deploy automátic
 
 - **Project ID:** `rudtxgwzqrsvrdniqvav`
 - **URL:** `https://rudtxgwzqrsvrdniqvav.supabase.co`
-- **Anon key:** no arquivo `.env` como `VITE_SUPABASE_PUBLISHABLE_KEY`
+- **Anon key:** no arquivo `.env` como `VITE_SUPABASE_PUBLISHABLE_KEY` (No Vercel também deve ter exatamente este nome)
 - **Regra:** frontend só chama RPCs (SECURITY DEFINER), nunca tabelas direto
 
 ## Stack
 
 - React 18 + Vite + TypeScript + Tailwind + shadcn/ui
 - Supabase (banco + storage)
-- Netlify (frontend + Functions como proxy)
+- **Vercel** (frontend + Serverless Functions na pasta `/api`)
 - N8N (automações: cadastro, bot WhatsApp)
 - QUEPASA (API WhatsApp)
