@@ -43,6 +43,10 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [verificandoConexao, setVerificandoConexao] = useState(false);
+  const [erroConexao, setErroConexao] = useState(false);
+  const [conexaoVerificada, setConexaoVerificada] = useState(false);
+
   const [faqs, setFaqs] = useState<FaqSlot[]>([
     { slot: 1, pergunta: '', resposta: '', midia_url: null, midia_tipo: null, ativa: true },
   ]);
@@ -113,6 +117,27 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       setLoading(false);
     }
   }, [celular, nomeEmpresa, dispositivo, onComplete]);
+
+  // ─── Verificar conexão manual (botão "Já digitei o código") ─────
+  const verificarConexaoManual = useCallback(async () => {
+    setVerificandoConexao(true);
+    setErroConexao(false);
+    try {
+      const res = await fetch(`/api/status-conexao?token=${encodeURIComponent(token ?? '')}`);
+      const data = await res.json();
+      if (data.conectado) {
+        setConexaoVerificada(true);
+        pararPolling();
+        finalizarCadastro(token);
+      } else {
+        setErroConexao(true);
+      }
+    } catch {
+      setErroConexao(true);
+    } finally {
+      setVerificandoConexao(false);
+    }
+  }, [token, pararPolling, finalizarCadastro]);
 
   // ─── Step: Boas-vindas ────────────────────────────────────────
   const renderBoasVindas = () => (
@@ -322,11 +347,39 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
     setQrBase64(null);
     setPairingCode(null);
     setQrExpirado(false);
+    setVerificandoConexao(false);
+    setErroConexao(false);
+    setConexaoVerificada(false);
     pararPolling();
 
     try {
-      const endpoint = dispositivo === 'desktop' ? '/api/qr-code' : '/api/pairing-code';
-      const res = await fetch(`${endpoint}?celular=${celular}`);
+      let res: Response;
+      if (dispositivo === 'desktop') {
+        // QR Code: GET simples
+        res = await fetch(`/api/qr-code?celular=${celular}`);
+      } else {
+        // Pairing Code: POST com body completo (nome_empresa, perguntas, etc.)
+        const faqsValidas = faqsRef.current.filter(f => f.pergunta.trim() && f.resposta.trim());
+        res = await fetch('/api/pairing-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            celular,
+            nome_empresa: nomeEmpresa,
+            token: null, // gerado pelo N8N
+            dispositivo: 'celular',
+            temp_upload_id: tempUploadId.current,
+            perguntas: faqsValidas.map(f => ({
+              slot: f.slot,
+              pergunta: f.pergunta.trim(),
+              resposta: f.resposta.trim(),
+              midia_url: f.midia_url,
+              midia_tipo: f.midia_tipo,
+              ativa: true,
+            })),
+          }),
+        });
+      }
       const data = await res.json();
 
       if (!data.ok) {
@@ -375,6 +428,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         const res = await fetch(`/api/status-conexao?token=${encodeURIComponent(tok)}`);
         const data = await res.json();
         if (data.conectado) {
+          setConexaoVerificada(true);
           pararPolling();
           finalizarCadastro(tok);
         }
@@ -453,17 +507,63 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       )}
 
       {pairingCode && (
-        <div className="flex flex-col items-center gap-3">
-          <div className="bg-slate-800 border border-slate-700 rounded-xl px-6 py-4">
-            <p className="text-slate-400 text-xs mb-1 text-center">Código de pareamento</p>
-            <p className="text-white text-3xl font-mono font-bold tracking-widest text-center">{pairingCode}</p>
+        <div className="flex flex-col gap-4 bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
+          {/* Código em destaque */}
+          <div className="flex flex-col items-center gap-1">
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Seu código de pareamento</p>
+            <div className="bg-slate-900 border border-slate-700 rounded-xl px-8 py-4 shadow-inner w-full flex justify-center">
+              <p className="text-white text-3xl font-mono font-bold tracking-[0.25em] text-center">
+                {pairingCode.length === 8
+                  ? `${pairingCode.slice(0, 4)}-${pairingCode.slice(4)}`
+                  : pairingCode}
+              </p>
+            </div>
           </div>
-          <p className="text-slate-400 text-xs text-center">
-            No WhatsApp: Configurações → Dispositivos vinculados → Vincular com número de telefone
-          </p>
-          {pollingAtivo && (
-            <div className="flex items-center gap-2 text-green-400 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" /> Aguardando confirmação...
+
+          {/* Instruções passo a passo */}
+          <div className="flex flex-col gap-2 text-sm">
+            <div className="flex gap-3 items-start bg-slate-900/50 rounded-lg p-3">
+              <span className="text-green-400 font-bold text-base leading-tight shrink-0">1</span>
+              <p className="text-slate-300 leading-snug">
+                Aguarde a notificação no WhatsApp: <strong className="text-white">"Você está tentando conectar um dispositivo?"</strong> — toque em <strong className="text-green-400">Confirmar</strong>.
+              </p>
+            </div>
+            <div className="flex gap-3 items-start bg-slate-900/50 rounded-lg p-3">
+              <span className="text-green-400 font-bold text-base leading-tight shrink-0">2</span>
+              <p className="text-slate-300 leading-snug">
+                O WhatsApp pedirá o código de 8 dígitos. Digite o código acima.
+              </p>
+            </div>
+            <div className="flex gap-3 items-start bg-slate-900/50 rounded-lg p-3">
+              <span className="text-green-400 font-bold text-base leading-tight shrink-0">3</span>
+              <p className="text-slate-300 leading-snug">
+                Após digitar, clique no botão abaixo para confirmar a conexão.
+              </p>
+            </div>
+          </div>
+
+          {/* Botão de confirmação ou status */}
+          {conexaoVerificada ? (
+            <div className="flex items-center justify-center gap-2 text-green-400 bg-green-500/10 px-4 py-3 rounded-lg">
+              <span className="text-lg">✅</span>
+              <span className="font-semibold text-sm">WhatsApp conectado! Finalizando cadastro...</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Button
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold"
+                onClick={verificarConexaoManual}
+                disabled={verificandoConexao}
+              >
+                {verificandoConexao
+                  ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Verificando conexão...</>
+                  : 'Já digitei o código — Confirmar ✓'}
+              </Button>
+              {erroConexao && (
+                <p className="text-red-400 text-xs text-center">
+                  Ainda não detectamos a conexão. Confirme no WhatsApp e tente novamente.
+                </p>
+              )}
             </div>
           )}
         </div>
