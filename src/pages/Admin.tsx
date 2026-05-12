@@ -74,7 +74,7 @@ export default function Admin() {
     setLoading(true);
     try {
       const data = await callApi('GET');
-      setSlots(data.slots ?? []);
+      setSlots(Array.isArray(data.slots) ? data.slots : []);
     } catch (e: any) {
       toast.error('Erro: ' + e.message);
     } finally {
@@ -209,7 +209,9 @@ export default function Admin() {
           {(['disponivel','ocupado','manutencao'] as const).map(s => (
             <div key={s} className="bg-slate-900 border border-slate-800 rounded-xl p-4">
               <p className="text-slate-500 text-xs mb-1">{s}</p>
-              <p className="text-white text-2xl font-bold">{slots.filter(sl => sl.status === s).length}</p>
+              <p className="text-white text-2xl font-bold">
+                {Array.isArray(slots) ? slots.filter(sl => sl.status === s).length : 0}
+              </p>
             </div>
           ))}
         </div>
@@ -270,7 +272,7 @@ export default function Admin() {
         )}
 
         <div className="flex flex-col gap-4">
-          {slots.map(slot => {
+          {Array.isArray(slots) && slots.map(slot => {
             const temAlteracao = Object.keys(editando[slot.id] ?? {}).length > 0;
             return (
               <div key={slot.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5">

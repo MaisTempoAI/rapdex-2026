@@ -27,11 +27,20 @@ export default async function handler(req, res) {
       `${SUPABASE_URL}/rest/v1/rapdex_slots?select=*&order=tipo,slot_nome`,
       { headers: supabaseHeaders }
     );
-    const raw = await supaRes.text();
-    const data = JSON.parse(raw);
+    
+    if (!supaRes.ok) {
+      const err = await supaRes.json().catch(() => ({}));
+      return res.status(supaRes.status).json({ 
+        ok: false, 
+        error: err.message || `Erro Supabase: ${supaRes.status}`,
+        _debug: { service_key_present: !!SERVICE_KEY, url: SUPABASE_URL }
+      });
+    }
+
+    const data = await supaRes.json();
     return res.status(200).json({
-      _debug: { count: data.length, http_status: supaRes.status, service_key_present: !!SERVICE_KEY, url: SUPABASE_URL },
-      slots: data,
+      ok: true,
+      slots: Array.isArray(data) ? data : [],
     });
   }
 
