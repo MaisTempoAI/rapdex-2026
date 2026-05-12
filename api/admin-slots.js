@@ -51,7 +51,7 @@ export default async function handler(req, res) {
     const { id, ...fields } = req.body || {};
     if (!id) return res.status(400).json({ ok: false, error: 'id_obrigatorio' });
 
-    const allowed = ['webhook_mensagem', 'workflow_url', 'status', 'slot_notas', 'quepasa_base_url', 'tipo', 'login'];
+    const allowed = ['webhook_mensagem', 'workflow_url', 'status', 'slot_notas', 'quepasa_base_url', 'tipo', 'login', 'n8n_hok_url', 'trial_expires_at'];
     const payload = Object.fromEntries(Object.entries(fields).filter(([k]) => allowed.includes(k)));
 
     const supaRes = await fetch(
@@ -73,9 +73,11 @@ export default async function handler(req, res) {
           headers: supabaseHeaders,
           body: JSON.stringify({
             status:      'disponivel',
+            tipo:        'free',
             login:       null,
             quepasa_key: null,
             quepasa_wid: null,
+            trial_expires_at: null,
             liberado_em: new Date().toISOString(),
           }),
         }

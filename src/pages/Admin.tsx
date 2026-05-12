@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2, Save, Unlock, Lock, RefreshCw, Plus, Trash2, XCircle } from 'lucide-react';
+import { Loader2, Save, Unlock, Lock, RefreshCw, Plus, Trash2, XCircle, Search, Copy, Check } from 'lucide-react';
 
 interface Slot {
   id: number;
@@ -15,6 +15,8 @@ interface Slot {
   quepasa_base_url: string;
   webhook_mensagem: string;
   workflow_url: string | null;
+  n8n_hok_url: string | null;
+  trial_expires_at: string | null;
   slot_notas: string | null;
   alocado_em: string | null;
   liberado_em: string | null;
@@ -32,7 +34,8 @@ const SLOT_VAZIO: Omit<Slot, 'id'> = {
   slot_nome: '', tipo: 'free', status: 'disponivel',
   login: null, quepasa_key: null, quepasa_wid: null,
   quepasa_base_url: 'https://quepasa-stack-quepasa.pkgaq6.easypanel.host',
-  webhook_mensagem: '', workflow_url: '', slot_notas: '',
+  webhook_mensagem: '', workflow_url: '', n8n_hok_url: '',
+  trial_expires_at: null, slot_notas: '',
   alocado_em: null, liberado_em: null,
 };
 
@@ -45,6 +48,9 @@ export default function Admin() {
   const [salvando, setSalvando]     = useState<number | null>(null);
   const [novoSlot, setNovoSlot]     = useState(false);
   const [novoForm, setNovoForm]     = useState<Omit<Slot,'id'>>(SLOT_VAZIO);
+  const [buscaLogin, setBuscaLogin] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('todos');
+  const [copiando, setCopiando]     = useState<number | null>(null);
   const senhaRef = useRef('');
 
   const callApi = async (method: string, body?: any) => {
@@ -156,6 +162,19 @@ export default function Admin() {
   const val = (slot: Slot, field: keyof Slot) =>
     (editando[slot.id]?.[field] as string) ?? (slot[field] as string) ?? '';
 
+  const copiar = (id: number, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiando(id);
+    setTimeout(() => setCopiando(null), 2000);
+    toast.success('Copiado!');
+  };
+
+  const slotsFiltrados = slots.filter(s => {
+    const matchLogin = !buscaLogin || s.login?.toLowerCase().includes(buscaLogin.toLowerCase());
+    const matchStatus = filtroStatus === 'todos' || s.status === filtroStatus;
+    return matchLogin && matchStatus;
+  });
+
   // ── Login ────────────────────────────────────────────────────
   if (!logado) return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
@@ -188,19 +207,45 @@ export default function Admin() {
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-5xl mx-auto">
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-white text-2xl font-bold">Slots RAPDEX</h1>
-            <p className="text-slate-500 text-sm">{slots.length} slots</p>
+        {/* Header & Filtros */}
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-white text-2xl font-bold">Slots RAPDEX</h1>
+              <p className="text-slate-500 text-sm">{slotsFiltrados.length} slots encontrados</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="border-slate-700 text-slate-400" onClick={carregar} disabled={loading}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Atualizar
+              </Button>
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={() => setNovoSlot(true)}>
+                <Plus className="w-4 h-4 mr-2" /> Novo slot
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="border-slate-700 text-slate-400" onClick={carregar} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Atualizar
-            </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={() => setNovoSlot(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Novo slot
-            </Button>
+
+          <div className="flex flex-wrap gap-3 bg-slate-900 border border-slate-800 p-4 rounded-xl">
+            <div className="flex-1 min-w-[200px] relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Input
+                placeholder="Buscar por login/celular..."
+                value={buscaLogin}
+                onChange={e => setBuscaLogin(e.target.value)}
+                className="bg-slate-800 border-slate-700 pl-10 text-white"
+              />
+            </div>
+            <div className="w-[150px]">
+              <select
+                value={filtroStatus}
+                onChange={e => setFiltroStatus(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-md px-3 py-2"
+              >
+                <option value="todos">Todos Status</option>
+                <option value="disponivel">Disponível</option>
+                <option value="ocupado">Ocupado</option>
+                <option value="manutencao">Manutenção</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -223,9 +268,9 @@ export default function Admin() {
             <div className="grid grid-cols-2 gap-3 mb-3">
               {[
                 ['slot_nome','Nome (ex: free_02)'],
-                ['webhook_mensagem','Webhook Mensagem (N8N)'],
+                ['n8n_hok_url','N8N Webhook URL'],
                 ['workflow_url','Workflow URL'],
-                ['quepasa_base_url','QUEPASA Base URL'],
+                ['trial_expires_at','Trial Expira em (AAAA-MM-DD HH:MM:SS)'],
               ].map(([f, label]) => (
                 <div key={f}>
                   <label className="text-slate-500 text-xs mb-1 block">{label}</label>
@@ -244,13 +289,7 @@ export default function Admin() {
                   <option value="premium">premium</option>
                 </select>
               </div>
-              <div>
-                <label className="text-slate-500 text-xs mb-1 block">Notas</label>
-                <Input value={novoForm.slot_notas ?? ''}
-                  onChange={e => setNovoForm(p => ({...p, slot_notas: e.target.value}))}
-                  className="bg-slate-800 border-slate-700 text-white text-sm"
-                />
-              </div>
+
             </div>
             <div className="flex gap-2">
               <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={criarSlot}>
@@ -272,7 +311,7 @@ export default function Admin() {
         )}
 
         <div className="flex flex-col gap-4">
-          {Array.isArray(slots) && slots.map(slot => {
+          {slotsFiltrados.map(slot => {
             const temAlteracao = Object.keys(editando[slot.id] ?? {}).length > 0;
             return (
               <div key={slot.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
@@ -291,20 +330,47 @@ export default function Admin() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {([
-                    ['webhook_mensagem','Webhook Mensagem (N8N)'],
-                    ['workflow_url','Workflow URL'],
-                    ['quepasa_base_url','QUEPASA Base URL'],
-                    ['slot_notas','Notas'],
-                  ] as [keyof Slot, string][]).map(([f, label]) => (
-                    <div key={f as string}>
-                      <label className="text-slate-500 text-xs mb-1 block">{label}</label>
-                      <Input value={val(slot, f)}
-                        onChange={e => set(slot.id, f, e.target.value)}
-                        className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
+                  <div>
+                    <label className="text-slate-500 text-xs mb-1 block">ID do Slot</label>
+                    <Input value={slot.id} disabled className="bg-slate-950 border-slate-800 text-slate-500 text-sm font-mono" />
+                  </div>
+                  <div>
+                    <label className="text-slate-500 text-xs mb-1 block">Login (Celular)</label>
+                    <Input value={val(slot, 'login')}
+                      onChange={e => set(slot.id, 'login', e.target.value)}
+                      className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-500 text-xs mb-1 block">N8N Webhook URL (n8n_hok_url)</label>
+                    <Input value={val(slot, 'n8n_hok_url')}
+                      onChange={e => set(slot.id, 'n8n_hok_url', e.target.value)}
+                      className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-500 text-xs mb-1 block">Trial Expira em (trial_expires_at)</label>
+                    <Input value={val(slot, 'trial_expires_at')}
+                      onChange={e => set(slot.id, 'trial_expires_at', e.target.value)}
+                      placeholder="AAAA-MM-DD HH:MM:SS"
+                      className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-slate-500 text-xs mb-1 block">Workflow URL (para abrir no N8N)</label>
+                    <div className="flex gap-2">
+                      <Input value={val(slot, 'workflow_url')}
+                        onChange={e => set(slot.id, 'workflow_url', e.target.value)}
+                        className="bg-slate-800 border-slate-700 text-white text-sm font-mono flex-1"
                       />
+                      {slot.workflow_url && (
+                        <Button size="icon" variant="outline" className="border-slate-700 text-slate-400"
+                          onClick={() => copiar(slot.id, slot.workflow_url!)}>
+                          {copiando === slot.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      )}
                     </div>
-                  ))}
+                  </div>
                   <div>
                     <label className="text-slate-500 text-xs mb-1 block">Status</label>
                     <select value={editando[slot.id]?.status ?? slot.status}
@@ -313,6 +379,15 @@ export default function Admin() {
                       <option value="disponivel">disponivel</option>
                       <option value="ocupado">ocupado</option>
                       <option value="manutencao">manutencao</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-slate-500 text-xs mb-1 block">Tipo</label>
+                    <select value={editando[slot.id]?.tipo ?? slot.tipo}
+                      onChange={e => set(slot.id, 'tipo', e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-md px-3 py-2">
+                      <option value="free">free</option>
+                      <option value="premium">premium</option>
                     </select>
                   </div>
                 </div>
@@ -332,13 +407,11 @@ export default function Admin() {
                       Salvar
                     </Button>
                   )}
-                  {slot.status === 'ocupado' && (
-                    <Button size="sm" variant="outline"
-                      className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10"
-                      onClick={() => liberar(slot)} disabled={salvando === slot.id}>
-                      <Unlock className="w-3 h-3 mr-1"/> Liberar
-                    </Button>
-                  )}
+                  <Button size="sm" variant="outline"
+                    className="border-green-500/40 text-green-400 hover:bg-green-500/10"
+                    onClick={() => liberar(slot)} disabled={salvando === slot.id}>
+                    <Unlock className="w-3 h-3 mr-1"/> LIBERAR
+                  </Button>
                   {slot.login && (
                     <Button size="sm" variant="outline"
                       className="border-slate-500/40 text-slate-400 hover:bg-slate-500/10"
