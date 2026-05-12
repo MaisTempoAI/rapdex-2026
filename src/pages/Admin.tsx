@@ -26,7 +26,7 @@ const ADMIN_PWD = import.meta.env.VITE_ADMIN_PASSWORD as string;
 
 const STATUS_COLOR: Record<string, string> = {
   disponivel: 'bg-green-500/20 text-green-400 border-green-500/30',
-  ocupado:    'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  ocupado:    'bg-red-500/20 text-red-400 border-red-500/30',
   manutencao: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
@@ -313,8 +313,14 @@ export default function Admin() {
         <div className="flex flex-col gap-4">
           {slotsFiltrados.map(slot => {
             const temAlteracao = Object.keys(editando[slot.id] ?? {}).length > 0;
+            const isOcupado = slot.status === 'ocupado';
+            
             return (
-              <div key={slot.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+              <div key={slot.id} className={`rounded-xl p-5 border transition-all duration-300 ${
+                isOcupado 
+                  ? 'bg-red-500/5 border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.05)]' 
+                  : 'bg-slate-900 border-slate-800'
+              }`}>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-white font-mono font-bold">{slot.slot_nome}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLOR[slot.status] ?? ''}`}>
