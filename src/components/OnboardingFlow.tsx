@@ -22,7 +22,7 @@ interface OnboardingProps {
   onBack?: () => void;
 }
 
-type Step = 'boas_vindas' | 'dados' | 'faqs' | 'conexao' | 'finalizando';
+type Step = 'boas_vindas' | 'dados' | 'faqs' | 'conexao' | 'finalizando' | 'sucesso';
 type Dispositivo = 'desktop' | 'celular';
 
 // ─── Componente Principal ─────────────────────────────────────
@@ -108,8 +108,8 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         return;
       }
 
-      toast.success('Conta criada! Você receberá sua senha pelo WhatsApp.');
-      onComplete(celular);
+      toast.success('Conta criada com sucesso!');
+      setStep('sucesso');
     } catch {
       toast.error('Falha de conexão. Verifique sua internet e tente novamente.');
       setStep('conexao');
@@ -618,9 +618,44 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
     </div>
   );
 
+  // ─── Step: Sucesso ────────────────────────────────────────────
+  const renderSucesso = () => (
+    <div className="flex flex-col items-center gap-6 text-center">
+      <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center animate-pulse">
+        <span className="text-4xl">🎉</span>
+      </div>
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-2">Tudo pronto!</h2>
+        <p className="text-slate-300 text-sm leading-relaxed mb-4">
+          O RAPDEX já está conectado e sua conta foi criada.
+        </p>
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col gap-2 text-left shadow-inner">
+          <p className="text-slate-300 text-sm">
+            <span className="text-green-400 font-semibold mr-1">1.</span>
+            Abra seu WhatsApp agora.
+          </p>
+          <p className="text-slate-300 text-sm">
+            <span className="text-green-400 font-semibold mr-1">2.</span>
+            Procure por uma mensagem enviada <strong className="text-white">de você para você mesmo(a)</strong>.
+          </p>
+          <p className="text-slate-300 text-sm">
+            <span className="text-green-400 font-semibold mr-1">3.</span>
+            A mensagem contém seu <strong>Login e Senha</strong> de acesso.
+          </p>
+        </div>
+      </div>
+      <Button
+        className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-6 text-lg mt-2"
+        onClick={() => onComplete(celular)}
+      >
+        Ir para o Login <ChevronRight className="ml-2 w-5 h-5" />
+      </Button>
+    </div>
+  );
+
   // ─── Progress bar ─────────────────────────────────────────────
   const stepIndex: Record<Step, number> = {
-    boas_vindas: 0, dados: 1, faqs: 2, conexao: 3, finalizando: 4,
+    boas_vindas: 0, dados: 1, faqs: 2, conexao: 3, finalizando: 4, sucesso: 4,
   };
   const totalSteps = 4;
   const progresso = Math.min((stepIndex[step] / totalSteps) * 100, 100);
@@ -631,7 +666,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
     <div className="min-h-screen bg-slate-950 flex items-start justify-center p-4 py-8">
       <div className={`w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl transition-all duration-300 ${isWideStep ? 'max-w-2xl' : 'max-w-md'}`}>
 
-        {onBack && step !== 'finalizando' && (
+        {onBack && step !== 'finalizando' && step !== 'sucesso' && (
           <button
             onClick={onBack}
             className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm mb-5 transition-colors group"
@@ -641,7 +676,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
           </button>
         )}
 
-        {step !== 'boas_vindas' && step !== 'finalizando' && (
+        {step !== 'boas_vindas' && step !== 'finalizando' && step !== 'sucesso' && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-500 text-xs">Passo {stepIndex[step]} de {totalSteps}</span>
@@ -661,6 +696,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         {step === 'faqs' && renderFaqs()}
         {step === 'conexao' && renderConexao()}
         {step === 'finalizando' && renderFinalizando()}
+        {step === 'sucesso' && renderSucesso()}
       </div>
     </div>
   );

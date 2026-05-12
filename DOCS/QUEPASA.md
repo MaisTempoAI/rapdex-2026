@@ -53,12 +53,20 @@ Body:
 {
   "url": "https://n8n.../webhook/{uuid}?quepasakey={quepasakey}",
   "forwardinternal": false,
-  "extra": { "optional": "ok" }
+  "groups": false,
+  "broadcasts": false,
+  "calls": false,
+  "acks": false
 }
 ```
 
-- `forwardinternal: false` → não reenvia mensagens enviadas pelo próprio bot
-- A `quepasakey` é passada como query string para o N8N identificar qual conta disparou
+- `forwardinternal: false` → ignora mensagens enviadas pelo próprio bot.
+- `groups: false` → ignora mensagens vindas de grupos.
+- `broadcasts: false` → ignora mensagens vindas de listas de transmissão.
+- `calls: false` → ignora notificações de chamadas de voz/vídeo.
+- `acks: false` → ignora recibos de leitura (ticks azuis/duplos).
+- O campo implicito `messages: true` se encarrega de receber apenas mensagens diretas 1:1.
+- A `quepasakey` é passada obrigatoriamente como query string (`?quepasakey=...`) na URL para o N8N identificar com precisão qual conta disparou o evento.
 
 ### Enviar texto
 ```http

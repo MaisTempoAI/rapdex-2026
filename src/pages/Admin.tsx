@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2, Save, Unlock, Lock, RefreshCw, Plus, Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Loader2, Save, Unlock, Lock, RefreshCw, Plus, Trash2, XCircle } from 'lucide-react';
 
 interface Slot {
   id: number;
@@ -46,67 +45,109 @@ export default function Admin() {
   const [salvando, setSalvando]     = useState<number | null>(null);
   const [novoSlot, setNovoSlot]     = useState(false);
   const [novoForm, setNovoForm]     = useState<Omit<Slot,'id'>>(SLOT_VAZIO);
+  const senhaRef = useRef('');
+
+  const callApi = async (method: string, body?: any) => {
+    const res = await fetch('/api/admin-slots', {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': senhaRef.current,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
+  };
 
   const login = () => {
     if (senha !== ADMIN_PWD) { toast.error('Senha incorreta.'); return; }
     setLogado(true);
+    senhaRef.current = senha;
     carregar();
   };
 
   const carregar = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('rapdex_slots')
-      .select('*')
-      .order('tipo').order('slot_nome');
-    setLoading(false);
-    if (error) { toast.error('Erro: ' + error.message); return; }
-    setSlots(data ?? []);
+    try {
+      const data = await callApi('GET');
+      setSlots(data.slots ?? []);
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const salvar = async (slot: Slot) => {
     const changes = editando[slot.id];
     if (!changes || !Object.keys(changes).length) return;
     setSalvando(slot.id);
-    const { error } = await supabase.from('rapdex_slots').update(changes).eq('id', slot.id);
-    setSalvando(null);
-    if (error) { toast.error('Erro: ' + error.message); return; }
-    toast.success(`${slot.slot_nome} salvo.`);
-    setEditando(p => { const n = {...p}; delete n[slot.id]; return n; });
-    carregar();
+    try {
+      await callApi('PUT', { id: slot.id, ...changes });
+      toast.success(`${slot.slot_nome} salvo.`);
+      setEditando(p => { const n = {...p}; delete n[slot.id]; return n; });
+      carregar();
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+    } finally {
+      setSalvando(null);
+    }
   };
 
   const liberar = async (slot: Slot) => {
     if (!confirm(`Liberar slot ${slot.slot_nome}?`)) return;
     setSalvando(slot.id);
-    const { error } = await supabase.from('rapdex_slots').update({
-      status: 'disponivel', login: null, quepasa_key: null,
-      quepasa_wid: null, liberado_em: new Date().toISOString(),
-    }).eq('id', slot.id);
-    setSalvando(null);
-    if (error) { toast.error('Erro: ' + error.message); return; }
-    toast.success('Slot liberado.');
-    carregar();
+    try {
+      await callApi('POST', { action: 'liberar', id: slot.id });
+      toast.success('Slot liberado.');
+      carregar();
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+    } finally {
+      setSalvando(null);
+    }
+  };
+
+  const limparLogin = async (slot: Slot) => {
+    if (!confirm(`Limpar login do slot ${slot.slot_nome}?`)) return;
+    try {
+      await callApi('PUT', { id: slot.id, login: null });
+      toast.success(`Login de ${slot.slot_nome} removido.`);
+      setEditando(p => { const n = {...p}; delete n[slot.id]; return n; });
+      carregar();
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+    }
   };
 
   const excluir = async (slot: Slot) => {
     if (!confirm(`Excluir slot ${slot.slot_nome}? Isso é irreversível.`)) return;
-    const { error } = await supabase.from('rapdex_slots').delete().eq('id', slot.id);
-    if (error) { toast.error('Erro: ' + error.message); return; }
-    toast.success('Slot excluído.');
-    carregar();
+    try {
+      await callApi('DELETE', { id: slot.id });
+      toast.success('Slot excluído.');
+      carregar();
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+    }
   };
 
   const criarSlot = async () => {
     if (!novoForm.slot_nome || !novoForm.webhook_mensagem) {
       toast.error('Nome e webhook são obrigatórios.'); return;
     }
-    const { error } = await supabase.from('rapdex_slots').insert(novoForm);
-    if (error) { toast.error('Erro: ' + error.message); return; }
-    toast.success('Slot criado!');
-    setNovoSlot(false);
-    setNovoForm(SLOT_VAZIO);
-    carregar();
+    try {
+      await callApi('POST', { action: 'criar', slot: novoForm });
+      toast.success('Slot criado!');
+      setNovoSlot(false);
+      setNovoForm(SLOT_VAZIO);
+      carregar();
+    } catch (e: any) {
+      toast.error('Erro: ' + e.message);
+    }
   };
 
   const set = (id: number, field: keyof Slot, val: string) =>
@@ -294,6 +335,13 @@ export default function Admin() {
                       className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10"
                       onClick={() => liberar(slot)} disabled={salvando === slot.id}>
                       <Unlock className="w-3 h-3 mr-1"/> Liberar
+                    </Button>
+                  )}
+                  {slot.login && (
+                    <Button size="sm" variant="outline"
+                      className="border-slate-500/40 text-slate-400 hover:bg-slate-500/10"
+                      onClick={() => limparLogin(slot)} disabled={salvando === slot.id}>
+                      <XCircle className="w-3 h-3 mr-1"/> Limpar login
                     </Button>
                   )}
                   <Button size="sm" variant="outline"

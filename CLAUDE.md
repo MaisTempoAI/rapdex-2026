@@ -39,3 +39,26 @@ O Vercel está conectado ao GitHub — push no `main` dispara deploy automático
 - **Vercel** (frontend + Serverless Functions na pasta `/api`)
 - N8N (automações: cadastro, bot WhatsApp)
 - QUEPASA (API WhatsApp)
+
+---
+
+## Rotas do Site
+
+| Rota | Descrição |
+|------|-----------|
+| `/` | Página inicial |
+| `/novo` | Cadastro de novo cliente |
+| `/slotsadmin` | Painel admin de gestão de slots (senha: `VITE_ADMIN_PASSWORD`) |
+| `*` | Página 404 |
+
+---
+
+## Variáveis de Ambiente Importantes
+
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_ADMIN_PASSWORD` | Senha para acessar `/slotsadmin` |
+| `VITE_SUPABASE_URL` | URL do projeto Supabase |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Chave pública do Supabase |
+| `SUPABASE_SERVICE_KEY` | Chave de serviço (backend/api) |
+| `ADMIN_SECRET` | Chave para API admin-slots |

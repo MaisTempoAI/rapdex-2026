@@ -1,6 +1,7 @@
 const SUPABASE_URL    = process.env.VITE_SUPABASE_URL || 'https://rudtxgwzqrsvrdniqvav.supabase.co';
 const SERVICE_KEY     = process.env.SUPABASE_SERVICE_KEY;
 const ADMIN_SECRET    = process.env.ADMIN_SECRET;
+const ADMIN_PWD       = process.env.VITE_ADMIN_PASSWORD;
 
 const supabaseHeaders = {
   'apikey':        SERVICE_KEY,
@@ -9,9 +10,13 @@ const supabaseHeaders = {
   'Prefer':        'return=representation',
 };
 
+function authorized(key) {
+  return (ADMIN_SECRET && key === ADMIN_SECRET) || (ADMIN_PWD && key === ADMIN_PWD);
+}
+
 export default async function handler(req, res) {
   const adminKey = req.headers['x-admin-key'] || req.query?.admin_key;
-  if (!ADMIN_SECRET || adminKey !== ADMIN_SECRET) {
+  if (!authorized(adminKey)) {
     return res.status(401).json({ ok: false, error: 'unauthorized' });
   }
 
@@ -34,7 +39,7 @@ export default async function handler(req, res) {
     const { id, ...fields } = req.body || {};
     if (!id) return res.status(400).json({ ok: false, error: 'id_obrigatorio' });
 
-    const allowed = ['webhook_mensagem', 'workflow_url', 'status', 'slot_notas', 'quepasa_base_url', 'tipo'];
+    const allowed = ['webhook_mensagem', 'workflow_url', 'status', 'slot_notas', 'quepasa_base_url', 'tipo', 'login'];
     const payload = Object.fromEntries(Object.entries(fields).filter(([k]) => allowed.includes(k)));
 
     const supaRes = await fetch(
@@ -46,7 +51,7 @@ export default async function handler(req, res) {
   }
 
   if (method === 'POST') {
-    const { action, id } = req.body || {};
+    const { action, id, slot } = req.body || {};
 
     if (action === 'liberar' && id) {
       const supaRes = await fetch(
@@ -67,7 +72,25 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, slot: data[0] });
     }
 
+    if (action === 'criar' && slot) {
+      if (!slot.slot_nome) return res.status(400).json({ ok: false, error: 'nome_obrigatorio' });
+      const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/rapdex_slots`, {
+        method: 'POST', headers: supabaseHeaders, body: JSON.stringify(slot),
+      });
+      const data = await supaRes.json();
+      return res.status(200).json({ ok: true, slot: data[0] });
+    }
+
     return res.status(400).json({ ok: false, error: 'action_invalida' });
+  }
+
+  if (method === 'DELETE') {
+    const { id } = req.body || {};
+    if (!id) return res.status(400).json({ ok: false, error: 'id_obrigatorio' });
+    await fetch(`${SUPABASE_URL}/rest/v1/rapdex_slots?id=eq.${id}`, {
+      method: 'DELETE', headers: supabaseHeaders,
+    });
+    return res.status(200).json({ ok: true });
   }
 
   return res.status(405).json({ ok: false, error: 'method_not_allowed' });
