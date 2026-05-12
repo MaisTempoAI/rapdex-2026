@@ -1,17 +1,20 @@
 const SUPABASE_URL    = process.env.VITE_SUPABASE_URL || 'https://rudtxgwzqrsvrdniqvav.supabase.co';
-const SERVICE_KEY     = process.env.SUPABASE_SERVICE_KEY;
+const SERVICE_KEY     = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
 const ADMIN_SECRET    = process.env.ADMIN_SECRET;
 const ADMIN_PWD       = process.env.VITE_ADMIN_PASSWORD;
 
 const supabaseHeaders = {
-  'apikey':        SERVICE_KEY,
-  'Authorization': `Bearer ${SERVICE_KEY}`,
+  'apikey':        SERVICE_KEY || '',
+  'Authorization': `Bearer ${SERVICE_KEY || ''}`,
   'Content-Type':  'application/json',
   'Prefer':        'return=representation',
 };
 
 function authorized(key) {
-  return (ADMIN_SECRET && key === ADMIN_SECRET) || (ADMIN_PWD && key === ADMIN_PWD);
+  if (!key) return false;
+  const secretMatch = ADMIN_SECRET && key === ADMIN_SECRET;
+  const pwdMatch = ADMIN_PWD && key === ADMIN_PWD;
+  return secretMatch || pwdMatch;
 }
 
 export default async function handler(req, res) {
