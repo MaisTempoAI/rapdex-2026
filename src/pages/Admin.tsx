@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react';
+﻿﻿import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -347,6 +347,28 @@ export default function Admin() {
                       className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
                     />
                   </div>
+                  <div>
+                    <label className="text-slate-500 text-xs mb-1 block">Trial Expira em</label>
+                    <Input value={val(slot, 'trial_expires_at')}
+                      onChange={e => set(slot.id, 'trial_expires_at', e.target.value)}
+                      placeholder="AAAA-MM-DD HH:MM:SS"
+                      className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
+                    />
+                  </div>
+                  {slot.quepasa_key ? (
+                    <div>
+                      <label className="text-slate-500 text-xs mb-1 block">🔑 Chave de Acesso</label>
+                      <div className="flex gap-2">
+                        <Input value={slot.quepasa_key} readOnly
+                          className="bg-slate-950 border-slate-800 text-slate-300 text-sm font-mono flex-1"
+                        />
+                        <Button size="icon" variant="outline" className="border-slate-700 text-slate-400"
+                          onClick={() => copiar(slot.id, slot.quepasa_key!)}>
+                          {copiando === slot.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : <div />}
                   <div className="md:col-span-2">
                     <label className="text-slate-500 text-xs mb-1 block">N8N Webhook URL</label>
                     <div className="flex gap-2">
@@ -361,14 +383,6 @@ export default function Admin() {
                         </Button>
                       )}
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-slate-500 text-xs mb-1 block">Trial Expira em (trial_expires_at)</label>
-                    <Input value={val(slot, 'trial_expires_at')}
-                      onChange={e => set(slot.id, 'trial_expires_at', e.target.value)}
-                      placeholder="AAAA-MM-DD HH:MM:SS"
-                      className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
-                    />
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-slate-500 text-xs mb-1 block">Workflow URL (para abrir no N8N)</label>
@@ -406,10 +420,9 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {slot.quepasa_key && (
+                {slot.quepasa_wid && (
                   <div className="mt-3 flex gap-4 text-xs text-slate-600">
-                    <span>🔑 {slot.quepasa_key}</span>
-                    {slot.quepasa_wid && <span>📱 {slot.quepasa_wid}</span>}
+                    <span>📱 {slot.quepasa_wid}</span>
                   </div>
                 )}
 
