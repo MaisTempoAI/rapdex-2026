@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,6 +70,9 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
     setPollingAtivo(false);
     setCountdown(null);
   }, []);
+
+  // Limpa intervals quando o componente desmonta
+  useEffect(() => () => { pararPolling(); }, [pararPolling]);
 
   // ─── Finalizar cadastro ───────────────────────────────────────
   const finalizarCadastro = useCallback(async (tok: string | null) => {
@@ -410,6 +413,14 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         }, 1000);
       } else {
         setPairingCode(data.code);
+        // Pairing code expira em 5 minutos
+        setTimeout(() => {
+          if (pollingRef.current) {
+            pararPolling();
+            setPairingCode(null);
+            setQrExpirado(true);
+          }
+        }, 300_000);
       }
 
       iniciarPolling(tok);
@@ -478,9 +489,11 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       {qrExpirado && (
         <div className="flex flex-col items-center gap-3 p-4 bg-slate-800 rounded-xl border border-red-500/40">
           <span className="text-3xl">⏱️</span>
-          <p className="text-red-400 font-semibold text-sm">QR Code expirado</p>
+          <p className="text-red-400 font-semibold text-sm">
+            {dispositivo === 'desktop' ? 'QR Code expirado' : 'Código de pareamento expirado'}
+          </p>
           <p className="text-slate-400 text-xs text-center">
-            O código ficou inativo por 1 minuto. Clique em "Gerar novo" para continuar.
+            O código ficou inativo. Clique em "Gerar novo" para continuar.
           </p>
         </div>
       )}
