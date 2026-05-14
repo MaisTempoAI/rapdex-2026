@@ -1,7 +1,7 @@
-﻿import { notificar } from './_lib/pushover.js';
+import { notificar } from './_lib/pushover.js';
 
-const N8N          = process.env.N8N_BASE_URL      || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
-const PAIRING_URL  = process.env.GET_PAIRING_CODE  || `${N8N}/webhook/rapdex-pairing-code`;
+const N8N         = process.env.N8N_BASE_URL     || 'https://n8n-stack-n8n.nzdbvp.easypanel.host';
+const PAIRING_URL = process.env.GET_PAIRING_CODE || `${N8N}/webhook/rapdex-pairing-code`;
 
 export default async function handler(req, res) {
   const body         = req.method === 'POST' ? req.body : null;
@@ -20,18 +20,27 @@ export default async function handler(req, res) {
 
   try {
     const params = new URLSearchParams({ celular, dispositivo });
-    const n8nRes = await fetch(`${PAIRING_URL}?${params}`, { method: 'GET' });
-    const data   = await n8nRes.json();
+    if (nome_empresa) params.set('nome_empresa', nome_empresa);
 
-    // Normaliza: garante que o campo token existe
-    // O n8n pode retornar o quepasakey como "token", "quepasakey" ou "key"
+    const n8nRes = await fetch(`${PAIRING_URL}?${params}`, { method: 'GET' });
+
+    const text = await n8nRes.text();
+    if (!n8nRes.ok || !text || text.trim() === '') {
+      return res.status(502).json({ ok: false, error: 'n8n_sem_resposta', status: n8nRes.status });
+    }
+
+    let data = {};
+    try { data = JSON.parse(text); } catch {
+      return res.status(502).json({ ok: false, error: 'n8n_json_invalido' });
+    }
+
     const quepasakey = data.token ?? data.quepasakey ?? data.key ?? null;
     console.log('[pairing-code] quepasakey recebido:', quepasakey ? quepasakey.substring(0, 8) + '...' : 'null');
 
     return res.status(200).json({
       ...data,
       ok: data.ok ?? true,
-      token: quepasakey,   // garante campo token para o frontend
+      token: quepasakey,
     });
   } catch (err) {
     console.error('[pairing-code] erro:', err.message);
