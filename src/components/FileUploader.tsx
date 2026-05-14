@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+﻿import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Image, Music, FileText, X, Loader2, Mic, Square, Send, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
@@ -137,7 +137,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       const uploadOptions: { cacheControl: string; upsert: boolean; contentType?: string } = {
         cacheControl: "3600",
-        upsert: true,
+        upsert: false,
       };
       if (type === "audio") {
         uploadOptions.contentType = ext === "ogg" ? "audio/ogg" : "audio/webm";
