@@ -12,7 +12,11 @@ export default async function handler(req, res) {
   console.log('[status-conexao] URL:', CONNECT_URL);
 
   try {
-    const n8nRes = await fetch(CONNECT_URL, {
+    // Envia quepasakey como query param E header para garantir que o n8n receba
+    const url = new URL(CONNECT_URL);
+    url.searchParams.set('quepasakey', token);
+    const n8nRes = await fetch(url.toString(), {
+      method: 'GET',
       headers: { quepasakey: token },
     });
 
