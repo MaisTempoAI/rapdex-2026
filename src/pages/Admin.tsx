@@ -1,4 +1,4 @@
-﻿﻿import { useState, useRef } from 'react';
+﻿﻿﻿import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -34,8 +34,8 @@ const SLOT_VAZIO: Omit<Slot, 'id'> = {
   slot_nome: '', tipo: 'free', status: 'disponivel',
   login: null, quepasa_key: null, quepasa_wid: null,
   quepasa_base_url: 'https://quepasa-stack-quepasa.pkgaq6.easypanel.host',
-  webhook_mensagem: '', workflow_url: '', n8n_hok_url: '',
-  trial_expires_at: null, slot_notas: '',
+  webhook_mensagem: null, workflow_url: null, n8n_hok_url: null,
+  trial_expires_at: null, slot_notas: null,
   alocado_em: null, liberado_em: null,
 };
 
