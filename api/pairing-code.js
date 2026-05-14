@@ -22,7 +22,17 @@ export default async function handler(req, res) {
     const params = new URLSearchParams({ celular, dispositivo });
     const n8nRes = await fetch(`${PAIRING_URL}?${params}`, { method: 'GET' });
     const data   = await n8nRes.json();
-    return res.status(200).json(data);
+
+    // Normaliza: garante que o campo token existe
+    // O n8n pode retornar o quepasakey como "token", "quepasakey" ou "key"
+    const quepasakey = data.token ?? data.quepasakey ?? data.key ?? null;
+    console.log('[pairing-code] quepasakey recebido:', quepasakey ? quepasakey.substring(0, 8) + '...' : 'null');
+
+    return res.status(200).json({
+      ...data,
+      ok: data.ok ?? true,
+      token: quepasakey,   // garante campo token para o frontend
+    });
   } catch (err) {
     console.error('[pairing-code] erro:', err.message);
     return res.status(502).json({ ok: false, error: 'n8n_indisponivel' });
