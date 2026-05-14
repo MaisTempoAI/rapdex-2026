@@ -113,3 +113,12 @@ liberado_em     timestamptz null
 | 2026-05-14 | `n8n_hok_url` ficou full-width com botão copiar (igual workflow_url) |
 | 2026-05-14 | `trial_expires_at` movido acima do N8N Webhook URL |
 | 2026-05-14 | `quepasa_key` exibido ao lado do Trial como campo com botão copiar |
+| 2026-05-14 | `SLOT_VAZIO` corrigido: campos opcionais passaram de `''` para `null` — `''` violava unique constraint de `webhook_mensagem` |
+| 2026-05-14 | `api/admin-slots.js` corrigido: `criar`, `editar` e `liberar` agora checam `supaRes.ok` — antes retornavam sucesso mesmo com erro do Supabase |
+
+## Armadilhas conhecidas
+
+- **`webhook_mensagem` tem UNIQUE constraint** — nunca enviar string vazia `''`, sempre `null` quando não preenchido. Strings vazias violam a constraint, NULLs não.
+- **`quepasa_key` também tem UNIQUE constraint** — mesma regra.
+- **`api/admin-slots.js` usa service role key** — verificar no Vercel se existe uma das variáveis: `SUPABASE_SERVICE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` ou `SERVICE_ROLE_KEY`. Se nenhuma estiver configurada, todos os writes falham silenciosamente.
+- **API sempre retornava 200** — corrigido em 2026-05-14. Se voltar a ter problema de "criou mas não aparece", checar se `supaRes.ok` está sendo verificado.
