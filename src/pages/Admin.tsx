@@ -142,7 +142,7 @@ export default function Admin() {
   };
 
   const criarSlot = async () => {
-    if (!novoForm.slot_nome || !novoForm.webhook_mensagem) {
+    if (!novoForm.slot_nome) {
       toast.error('Nome e webhook são obrigatórios.'); return;
     }
     try {
