@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+﻿import { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -347,12 +347,20 @@ export default function Admin() {
                       className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
                     />
                   </div>
-                  <div>
-                    <label className="text-slate-500 text-xs mb-1 block">N8N Webhook URL (n8n_hok_url)</label>
-                    <Input value={val(slot, 'n8n_hok_url')}
-                      onChange={e => set(slot.id, 'n8n_hok_url', e.target.value)}
-                      className="bg-slate-800 border-slate-700 text-white text-sm font-mono"
-                    />
+                  <div className="md:col-span-2">
+                    <label className="text-slate-500 text-xs mb-1 block">N8N Webhook URL</label>
+                    <div className="flex gap-2">
+                      <Input value={val(slot, 'n8n_hok_url')}
+                        onChange={e => set(slot.id, 'n8n_hok_url', e.target.value)}
+                        className="bg-slate-800 border-slate-700 text-white text-sm font-mono flex-1"
+                      />
+                      {slot.n8n_hok_url && (
+                        <Button size="icon" variant="outline" className="border-slate-700 text-slate-400"
+                          onClick={() => copiar(slot.id, slot.n8n_hok_url!)}>
+                          {copiando === slot.id ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <label className="text-slate-500 text-xs mb-1 block">Trial Expira em (trial_expires_at)</label>
