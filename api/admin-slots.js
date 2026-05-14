@@ -1,4 +1,4 @@
-const SUPABASE_URL    = process.env.VITE_SUPABASE_URL || 'https://rudtxgwzqrsvrdniqvav.supabase.co';
+﻿const SUPABASE_URL    = process.env.VITE_SUPABASE_URL || 'https://rudtxgwzqrsvrdniqvav.supabase.co';
 const SERVICE_KEY     = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
 const ADMIN_SECRET    = process.env.ADMIN_SECRET;
 const ADMIN_PWD       = process.env.VITE_ADMIN_PASSWORD;
@@ -58,6 +58,10 @@ export default async function handler(req, res) {
       `${SUPABASE_URL}/rest/v1/rapdex_slots?id=eq.${id}`,
       { method: 'PATCH', headers: supabaseHeaders, body: JSON.stringify(payload) }
     );
+    if (!supaRes.ok) {
+      const err = await supaRes.json().catch(() => ({}));
+      return res.status(supaRes.status).json({ ok: false, error: err.message || `Erro Supabase: ${supaRes.status}`, _debug: { service_key_present: !!SERVICE_KEY } });
+    }
     const data = await supaRes.json();
     return res.status(200).json({ ok: true, slot: data[0] });
   }
@@ -82,6 +86,10 @@ export default async function handler(req, res) {
           }),
         }
       );
+      if (!supaRes.ok) {
+        const err = await supaRes.json().catch(() => ({}));
+        return res.status(supaRes.status).json({ ok: false, error: err.message || `Erro Supabase: ${supaRes.status}`, _debug: { service_key_present: !!SERVICE_KEY } });
+      }
       const data = await supaRes.json();
       return res.status(200).json({ ok: true, slot: data[0] });
     }
@@ -91,6 +99,10 @@ export default async function handler(req, res) {
       const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/rapdex_slots`, {
         method: 'POST', headers: supabaseHeaders, body: JSON.stringify(slot),
       });
+      if (!supaRes.ok) {
+        const err = await supaRes.json().catch(() => ({}));
+        return res.status(supaRes.status).json({ ok: false, error: err.message || `Erro Supabase: ${supaRes.status}`, _debug: { service_key_present: !!SERVICE_KEY } });
+      }
       const data = await supaRes.json();
       return res.status(200).json({ ok: true, slot: data[0] });
     }
