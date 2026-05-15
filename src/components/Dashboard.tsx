@@ -52,6 +52,10 @@ import {
   Eye,
   Sparkles,
   Download,
+  RefreshCw,
+  WifiOff,
+  Check,
+  Copy,
 } from "lucide-react";
 import {
   Tooltip,
@@ -277,6 +281,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, userData }) => {
   const [previewBackupData, setPreviewBackupData] = useState<any>(null);
   const [showBackupPreview, setShowBackupPreview] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
+
+  // Reconectar WhatsApp
+  const [reconectarOpen, setReconectarOpen] = useState(false);
+  const [reconectarCodigo, setReconectarCodigo] = useState<string | null>(null);
+  const [reconectarLoading, setReconectarLoading] = useState(false);
+  const [reconectarVerificando, setReconectarVerificando] = useState(false);
+  const [reconectarConectado, setReconectarConectado] = useState(false);
+  const [reconectarErro, setReconectarErro] = useState<string | null>(null);
+  const reconectarPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   // Refs for file inputs in advanced settings
   const greetingImageInputRef = useRef<HTMLInputElement>(null);
@@ -704,6 +717,72 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, userData }) => {
     updateState({ greetingMediaUrl: "" });
   };
 
+  const pararReconectarPolling = () => {
+    if (reconectarPollingRef.current) {
+      clearInterval(reconectarPollingRef.current);
+      reconectarPollingRef.current = null;
+    }
+  };
+
+  const iniciarReconexao = async () => {
+    if (!userData?.quepasakey || !userData?.login) return;
+    setReconectarLoading(true);
+    setReconectarErro(null);
+    setReconectarCodigo(null);
+    setReconectarConectado(false);
+
+    try {
+      const params = new URLSearchParams({
+        celular: userData.login,
+        dispositivo: "celular",
+        nome_empresa: userData.nomeEmpresa || userData.login,
+      });
+      const res = await fetch(`/api/pairing-code?${params.toString()}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.ok || !data.code) {
+        setReconectarErro(data.error || "Erro ao gerar código. Tente novamente.");
+        return;
+      }
+
+      setReconectarCodigo(data.code);
+      setReconectarVerificando(true);
+
+      let tentativas = 0;
+      reconectarPollingRef.current = setInterval(async () => {
+        tentativas++;
+        if (tentativas > 30) {
+          pararReconectarPolling();
+          setReconectarVerificando(false);
+          setReconectarErro("Tempo esgotado. Tente novamente.");
+          return;
+        }
+        try {
+          const statusRes = await fetch(
+            `/api/status-conexao?token=${userData.quepasakey}`
+          );
+          const statusData = await statusRes.json();
+          if (statusData.conectado) {
+            pararReconectarPolling();
+            setReconectarVerificando(false);
+            setReconectarConectado(true);
+          }
+        } catch {
+          // silencia erros de polling
+        }
+      }, 10_000);
+
+      setTimeout(() => {
+        pararReconectarPolling();
+        setReconectarVerificando(false);
+      }, 300_000);
+    } catch {
+      setReconectarErro("Erro de conexão. Tente novamente.");
+    } finally {
+      setReconectarLoading(false);
+    }
+  };
+
   // Main Screen
   if (activeTab === "main") {
     return (
@@ -730,18 +809,143 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, userData }) => {
                   Login: <span className="font-semibold">{userData?.login}</span>
                 </p>
               </div>
-              <Button
-                variant="glass"
-                size="sm"
-                onClick={onLogout}
-                className="h-9 sm:h-10"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="glass"
+                  size="sm"
+                  onClick={() => {
+                    setReconectarOpen(true);
+                    setReconectarCodigo(null);
+                    setReconectarConectado(false);
+                    setReconectarErro(null);
+                    setReconectarVerificando(false);
+                    pararReconectarPolling();
+                  }}
+                  className="h-9 sm:h-10"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span className="hidden sm:inline ml-1">Reconectar</span>
+                </Button>
+                <Button
+                  variant="glass"
+                  size="sm"
+                  onClick={onLogout}
+                  className="h-9 sm:h-10"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+              </div>
             </div>
           </div>
         </header>
+
+        {/* Dialog Reconectar WhatsApp */}
+        <Dialog
+          open={reconectarOpen}
+          onOpenChange={(open) => {
+            if (!open) pararReconectarPolling();
+            setReconectarOpen(open);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <RefreshCw className="w-5 h-5 text-[#3F5E96]" />
+                Reconectar WhatsApp
+              </DialogTitle>
+              <DialogDescription>
+                Gere um código de pareamento e insira no WhatsApp para reconectar seu número.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-4 space-y-4">
+              {reconectarConectado ? (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                    <Check className="w-8 h-8 text-green-600" />
+                  </div>
+                  <p className="text-center font-semibold text-green-700">WhatsApp reconectado!</p>
+                  <p className="text-center text-sm text-muted-foreground">
+                    Seu bot está ativo e pronto para responder.
+                  </p>
+                </div>
+              ) : reconectarErro ? (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                    <WifiOff className="w-8 h-8 text-red-500" />
+                  </div>
+                  <p className="text-center text-sm text-red-600">{reconectarErro}</p>
+                  <Button variant="outline" onClick={iniciarReconexao} disabled={reconectarLoading}>
+                    {reconectarLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    )}
+                    Tentar novamente
+                  </Button>
+                </div>
+              ) : reconectarCodigo ? (
+                <div className="flex flex-col items-center gap-4">
+                  <p className="text-sm text-muted-foreground text-center">
+                    No WhatsApp, vá em <strong>Configurações → Dispositivos conectados → Conectar dispositivo</strong> e insira o código:
+                  </p>
+                  <div className="flex items-center gap-3 bg-muted rounded-xl px-6 py-4">
+                    <span className="font-mono text-3xl font-bold tracking-widest text-[#3F5E96]">
+                      {reconectarCodigo}
+                    </span>
+                    <button
+                      className="ml-2 text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => {
+                        navigator.clipboard.writeText(reconectarCodigo!);
+                        toast.success("Código copiado!");
+                      }}
+                    >
+                      <Copy className="w-5 h-5" />
+                    </button>
+                  </div>
+                  {reconectarVerificando && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Aguardando confirmação...
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-4 py-2">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Clique abaixo para gerar um novo código de pareamento e reconectar seu WhatsApp.
+                  </p>
+                  <Button
+                    onClick={iniciarReconexao}
+                    disabled={reconectarLoading}
+                    className="w-full"
+                  >
+                    {reconectarLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Gerando código...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Gerar código de pareamento
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {(reconectarConectado || reconectarErro) && (
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setReconectarOpen(false)}>
+                  Fechar
+                </Button>
+              </DialogFooter>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
           {/* Stats Grid */}
