@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, ChevronRight, ChevronLeft, Smartphone, Monitor } from 'lucide-react';
+import { Loader2, Plus, Trash2, ChevronRight, ChevronLeft, Smartphone, Monitor, RotateCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { FileUploader } from '@/components/FileUploader';
 
@@ -46,6 +46,9 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   const [verificandoConexao, setVerificandoConexao] = useState(false);
   const [erroConexao, setErroConexao] = useState(false);
   const [conexaoVerificada, setConexaoVerificada] = useState(false);
+  const [falhaIniciar, setFalhaIniciar] = useState(false);
+  const [regenCooldown, setRegenCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [faqs, setFaqs] = useState<FaqSlot[]>([
     { slot: 1, pergunta: '', resposta: '', midia_url: null, midia_tipo: null, ativa: true },
@@ -72,7 +75,24 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   }, []);
 
   // Limpa intervals quando o componente desmonta
-  useEffect(() => () => { pararPolling(); }, [pararPolling]);
+  useEffect(() => () => {
+    pararPolling();
+    if (cooldownRef.current) { clearInterval(cooldownRef.current); cooldownRef.current = null; }
+  }, [pararPolling]);
+
+  const iniciarCooldown = useCallback((segundos = 3) => {
+    setRegenCooldown(segundos);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setRegenCooldown(prev => {
+        if (prev <= 1) {
+          if (cooldownRef.current) { clearInterval(cooldownRef.current); cooldownRef.current = null; }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
 
   // ─── Finalizar cadastro ───────────────────────────────────────
   const finalizarCadastro = useCallback(async (tok: string | null) => {
@@ -353,7 +373,9 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
     setVerificandoConexao(false);
     setErroConexao(false);
     setConexaoVerificada(false);
+    setFalhaIniciar(false);
     pararPolling();
+    iniciarCooldown(3);
 
     try {
       let res: Response;
@@ -387,6 +409,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
 
       if (!data.ok) {
         toast.error(data.error ?? 'Erro ao iniciar conexão. Tente novamente.');
+        setFalhaIniciar(true);
         return;
       }
 
@@ -426,9 +449,22 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       iniciarPolling(tok);
     } catch {
       toast.error('Falha na conexão com o servidor.');
+      setFalhaIniciar(true);
     } finally {
       setLoading(false);
     }
+  };
+
+  const regerarCodigo = () => {
+    if (regenCooldown > 0 || loading) return;
+    const temCodigoAtivo = (qrBase64 || pairingCode) && !qrExpirado && !falhaIniciar;
+    if (temCodigoAtivo) {
+      const ok = window.confirm(
+        'Gerar um novo código vai invalidar o atual. Se você já confirmou no WhatsApp, espere a verificação automática. Continuar mesmo assim?'
+      );
+      if (!ok) return;
+    }
+    iniciarConexao();
   };
 
   const iniciarPolling = (tok: string) => {
@@ -493,8 +529,36 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
             {dispositivo === 'desktop' ? 'QR Code expirado' : 'Código de pareamento expirado'}
           </p>
           <p className="text-slate-400 text-xs text-center">
-            O código ficou inativo. Clique em "Gerar novo" para continuar.
+            O código ficou inativo. Seus dados de cadastro foram mantidos — clique abaixo para gerar um novo.
           </p>
+          <Button
+            className="bg-green-500 hover:bg-green-600 text-white font-semibold"
+            onClick={regerarCodigo}
+            disabled={loading || regenCooldown > 0}
+          >
+            {loading
+              ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Gerando...</>
+              : <><RotateCw className="w-4 h-4 mr-2" /> {regenCooldown > 0 ? `Aguarde ${regenCooldown}s` : 'Gerar novo código'}</>}
+          </Button>
+        </div>
+      )}
+
+      {falhaIniciar && !qrExpirado && (
+        <div className="flex flex-col items-center gap-3 p-4 bg-slate-800 rounded-xl border border-red-500/40">
+          <span className="text-3xl">⚠️</span>
+          <p className="text-red-400 font-semibold text-sm">Não foi possível gerar o código</p>
+          <p className="text-slate-400 text-xs text-center">
+            Falha de comunicação com o servidor. Seus dados estão salvos — tente novamente.
+          </p>
+          <Button
+            className="bg-green-500 hover:bg-green-600 text-white font-semibold"
+            onClick={regerarCodigo}
+            disabled={loading || regenCooldown > 0}
+          >
+            {loading
+              ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Tentando...</>
+              : <><RotateCw className="w-4 h-4 mr-2" /> {regenCooldown > 0 ? `Aguarde ${regenCooldown}s` : 'Tentar novamente'}</>}
+          </Button>
         </div>
       )}
 
@@ -516,6 +580,14 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
               <Loader2 className="w-4 h-4 animate-spin" /> Aguardando conexão...
             </div>
           )}
+          <button
+            onClick={regerarCodigo}
+            disabled={loading || regenCooldown > 0}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-green-400 disabled:opacity-50 disabled:hover:text-slate-400 transition-colors mt-1"
+          >
+            <RotateCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            {regenCooldown > 0 ? `Aguarde ${regenCooldown}s` : 'Gerar novo QR Code'}
+          </button>
         </div>
       )}
 
@@ -577,6 +649,14 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
                   Ainda não detectamos a conexão. Confirme no WhatsApp e tente novamente.
                 </p>
               )}
+              <button
+                onClick={regerarCodigo}
+                disabled={loading || regenCooldown > 0}
+                className="flex items-center justify-center gap-1.5 text-xs text-slate-400 hover:text-green-400 disabled:opacity-50 disabled:hover:text-slate-400 transition-colors py-1"
+              >
+                <RotateCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                {regenCooldown > 0 ? `Aguarde ${regenCooldown}s para gerar um novo` : 'Gerar um novo código'}
+              </button>
             </div>
           )}
         </div>
@@ -590,7 +670,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         >
           <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
         </Button>
-        {!qrBase64 && !pairingCode ? (
+        {!qrBase64 && !pairingCode && !qrExpirado && !falhaIniciar ? (
           <Button
             className="flex-1 bg-green-500 hover:bg-green-600 text-white"
             onClick={iniciarConexao}
@@ -602,11 +682,13 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         ) : (
           <Button
             variant="outline"
-            className="flex-1 border-slate-700 text-slate-400"
-            onClick={iniciarConexao}
-            disabled={loading}
+            className="flex-1 border-green-500/40 text-green-400 hover:bg-green-500/10 hover:text-green-300"
+            onClick={regerarCodigo}
+            disabled={loading || regenCooldown > 0}
           >
-            Gerar novo
+            {loading
+              ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Gerando...</>
+              : <><RotateCw className="w-4 h-4 mr-2" /> {regenCooldown > 0 ? `Aguarde ${regenCooldown}s` : 'Gerar novo código'}</>}
           </Button>
         )}
       </div>
