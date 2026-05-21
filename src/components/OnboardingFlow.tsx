@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+﻿import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,8 +58,11 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   // Credenciais retornadas pelo n8n para exibir na tela de sucesso
   const [credenciais, setCredenciais] = useState<{ login: string; senha: string; duplicate?: boolean } | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [copiadoCodigo, setCopiadoCodigo] = useState(false);
   // Timeout de expiração do pairing code (300s) — precisa ser cancelável ao regenerar.
   const expiracaoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Lock síncrono para evitar duplo disparo de iniciarConexao antes do re-render
+  const iniciarConexaoLockRef = useRef(false);
 
   const [faqs, setFaqs] = useState<FaqSlot[]>([
     { slot: 1, pergunta: '', resposta: '', midia_url: null, midia_tipo: null, ativa: true },
@@ -416,6 +419,8 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
 
   // ─── Step: Conexão WhatsApp ───────────────────────────────────
   const iniciarConexao = async () => {
+    if (iniciarConexaoLockRef.current) return;
+    iniciarConexaoLockRef.current = true;
     setLoading(true);
     setQrBase64(null);
     setPairingCode(null);
@@ -504,6 +509,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       setFalhaIniciar(true);
     } finally {
       setLoading(false);
+      iniciarConexaoLockRef.current = false;
     }
   };
 
@@ -646,7 +652,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       {pairingCode && (
         <div className="flex flex-col gap-4 bg-slate-800/50 p-5 rounded-xl border border-slate-700/50">
           {/* Código em destaque */}
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-2">
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wide">Seu código de pareamento</p>
             <div className="bg-slate-900 border border-slate-700 rounded-xl px-8 py-4 shadow-inner w-full flex justify-center">
               <p className="text-white text-3xl font-mono font-bold tracking-[0.25em] text-center">
@@ -655,6 +661,22 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
                   : pairingCode}
               </p>
             </div>
+            <button
+              className="flex items-center justify-center gap-2 w-full py-2 text-sm rounded-lg border transition-colors"
+              style={copiadoCodigo
+                ? { color: '#4ade80', borderColor: 'rgba(74,222,128,0.4)', background: 'rgba(74,222,128,0.08)' }
+                : { color: '#94a3b8', borderColor: '#334155', background: '#1e293b' }}
+              onClick={() => {
+                const codigo = pairingCode.length === 8 ? pairingCode : pairingCode.replace(/-/g, '');
+                navigator.clipboard.writeText(codigo);
+                setCopiadoCodigo(true);
+                setTimeout(() => setCopiadoCodigo(false), 2000);
+              }}
+            >
+              {copiadoCodigo
+                ? <><Check className="w-4 h-4" /> Copiado!</>
+                : <><Copy className="w-4 h-4" /> Toque para copiar o código</>}
+            </button>
           </div>
 
           {/* Instruções passo a passo */}
@@ -668,7 +690,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
             <div className="flex gap-3 items-start bg-slate-900/50 rounded-lg p-3">
               <span className="text-green-400 font-bold text-base leading-tight shrink-0">2</span>
               <p className="text-slate-300 leading-snug">
-                O WhatsApp pedirá o código de 8 dígitos. Digite o código acima.
+                O WhatsApp pedirá o código de 8 dígitos. Copie e cole ou digite o código acima.
               </p>
             </div>
             <div className="flex gap-3 items-start bg-slate-900/50 rounded-lg p-3">
