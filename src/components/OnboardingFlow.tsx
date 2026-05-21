@@ -50,6 +50,13 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   const [regenCooldown, setRegenCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Idempotência do cadastro: a mesma promise é retornada para todos os callers
+  // (polling, botão manual, "pular conexão"), garantindo execução única.
+  const cadastroPromiseRef = useRef<Promise<void> | null>(null);
+  const cadastroAbortRef = useRef<AbortController | null>(null);
+  // Timeout de expiração do pairing code (300s) — precisa ser cancelável ao regenerar.
+  const expiracaoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [faqs, setFaqs] = useState<FaqSlot[]>([
     { slot: 1, pergunta: '', resposta: '', midia_url: null, midia_tipo: null, ativa: true },
   ]);
@@ -70,14 +77,19 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       clearInterval(countdownRef.current);
       countdownRef.current = null;
     }
+    if (expiracaoRef.current) {
+      clearTimeout(expiracaoRef.current);
+      expiracaoRef.current = null;
+    }
     setPollingAtivo(false);
     setCountdown(null);
   }, []);
 
-  // Limpa intervals quando o componente desmonta
+  // Limpa intervals e cancela request em voo quando o componente desmonta
   useEffect(() => () => {
     pararPolling();
     if (cooldownRef.current) { clearInterval(cooldownRef.current); cooldownRef.current = null; }
+    if (cadastroAbortRef.current) { cadastroAbortRef.current.abort(); cadastroAbortRef.current = null; }
   }, [pararPolling]);
 
   const iniciarCooldown = useCallback((segundos = 3) => {
@@ -95,10 +107,20 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   }, []);
 
   // ─── Finalizar cadastro ───────────────────────────────────────
-  const finalizarCadastro = useCallback(async (tok: string | null) => {
-    const faqsValidas = faqsRef.current.filter(f => f.pergunta.trim() && f.resposta.trim());
+  // Promise lock: chamadas concorrentes (polling + clique manual + "pular")
+  // recebem A MESMA promise — execução única garantida no frontend.
+  // O header `Idempotency-Key` (= tempUploadId, único por sessão) garante
+  // dedup também no servidor caso a request escape (cold start, retry, etc).
+  const finalizarCadastro = useCallback((tok: string | null): Promise<void> => {
+    if (cadastroPromiseRef.current) return cadastroPromiseRef.current;
+
+    // Para polling/timeouts ANTES de qualquer await — evita novos ticks
+    // disparando enquanto o cadastro está em curso.
+    pararPolling();
     setLoading(true);
     setStep('finalizando');
+
+    cadastroAbortRef.current = new AbortController();
 
     const payload = {
       celular,
@@ -106,40 +128,54 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       token: tok,
       dispositivo,
       temp_upload_id: tempUploadId.current,
-      perguntas: faqsValidas.map(f => ({
-        slot: f.slot,
-        pergunta: f.pergunta.trim(),
-        resposta: f.resposta.trim(),
-        midia_url: f.midia_url,
-        midia_tipo: f.midia_tipo,
-        ativa: true,
-      })),
+      perguntas: faqsRef.current
+        .filter(f => f.pergunta.trim() && f.resposta.trim())
+        .map(f => ({
+          slot: f.slot,
+          pergunta: f.pergunta.trim(),
+          resposta: f.resposta.trim(),
+          midia_url: f.midia_url,
+          midia_tipo: f.midia_tipo,
+          ativa: true,
+        })),
     };
 
-    try {
-      const res = await fetch('/api/cadastro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    cadastroPromiseRef.current = (async () => {
+      try {
+        const res = await fetch('/api/cadastro', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': tempUploadId.current,
+          },
+          body: JSON.stringify(payload),
+          signal: cadastroAbortRef.current?.signal,
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!data.ok) {
-        toast.error(`Erro ao criar conta: ${data.error ?? 'Tente novamente.'}`);
+        if (!data.ok) {
+          toast.error(`Erro ao criar conta: ${data.error ?? 'Tente novamente.'}`);
+          setStep('conexao');
+          cadastroPromiseRef.current = null;   // libera retry
+          return;
+        }
+
+        toast.success('Conta criada com sucesso!');
+        setStep('sucesso');
+        // promise mantida em ref após sucesso → bloqueia qualquer re-trigger acidental
+      } catch (err: unknown) {
+        if ((err as { name?: string })?.name === 'AbortError') return;
+        toast.error('Falha de conexão. Verifique sua internet e tente novamente.');
         setStep('conexao');
-        return;
+        cadastroPromiseRef.current = null;     // libera retry
+      } finally {
+        setLoading(false);
       }
+    })();
 
-      toast.success('Conta criada com sucesso!');
-      setStep('sucesso');
-    } catch {
-      toast.error('Falha de conexão. Verifique sua internet e tente novamente.');
-      setStep('conexao');
-    } finally {
-      setLoading(false);
-    }
-  }, [celular, nomeEmpresa, dispositivo, onComplete]);
+    return cadastroPromiseRef.current;
+  }, [celular, nomeEmpresa, dispositivo, pararPolling]);
 
   // ─── Verificar conexão manual (botão "Já digitei o código") ─────
   const verificarConexaoManual = useCallback(async () => {
@@ -436,13 +472,15 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
         }, 1000);
       } else {
         setPairingCode(data.code);
-        // Pairing code expira em 5 minutos
-        setTimeout(() => {
+        // Pairing code expira em 5 minutos — guarda em ref para cancelar ao regenerar
+        if (expiracaoRef.current) clearTimeout(expiracaoRef.current);
+        expiracaoRef.current = setTimeout(() => {
           if (pollingRef.current) {
             pararPolling();
             setPairingCode(null);
             setQrExpirado(true);
           }
+          expiracaoRef.current = null;
         }, 300_000);
       }
 
