@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, ChevronRight, ChevronLeft, Smartphone, Monitor, RotateCw } from 'lucide-react';
+import { Loader2, Plus, Trash2, ChevronRight, ChevronLeft, Smartphone, Monitor, RotateCw, Copy, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { FileUploader } from '@/components/FileUploader';
 
@@ -54,6 +54,10 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   // (polling, botão manual, "pular conexão"), garantindo execução única.
   const cadastroPromiseRef = useRef<Promise<void> | null>(null);
   const cadastroAbortRef = useRef<AbortController | null>(null);
+
+  // Credenciais retornadas pelo n8n para exibir na tela de sucesso
+  const [credenciais, setCredenciais] = useState<{ login: string; senha: string; duplicate?: boolean } | null>(null);
+  const [copiado, setCopiado] = useState(false);
   // Timeout de expiração do pairing code (300s) — precisa ser cancelável ao regenerar.
   const expiracaoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -161,7 +165,17 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
           return;
         }
 
-        toast.success('Conta criada com sucesso!');
+        // Captura credenciais retornadas pelo n8n para exibir na tela de sucesso.
+        // Fallback: usa o token local se o backend não retornou (compat com fluxo antigo).
+        if (data.login || data.senha) {
+          setCredenciais({
+            login: data.login ?? celular,
+            senha: data.senha ?? tok ?? '',
+            duplicate: data.duplicate === true,
+          });
+        }
+
+        toast.success(data.duplicate ? 'Você já tinha uma conta!' : 'Conta criada com sucesso!');
         setStep('sucesso');
         // promise mantida em ref após sucesso → bloqueia qualquer re-trigger acidental
       } catch (err: unknown) {
@@ -752,34 +766,78 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
   );
 
   // ─── Step: Sucesso ────────────────────────────────────────────
+  const copiarCredenciais = async () => {
+    if (!credenciais) return;
+    try {
+      await navigator.clipboard.writeText(
+        `Login: ${credenciais.login}\nSenha: ${credenciais.senha}`,
+      );
+      setCopiado(true);
+      toast.success('Credenciais copiadas!');
+      setTimeout(() => setCopiado(false), 2500);
+    } catch {
+      toast.error('Não consegui copiar. Anote manualmente.');
+    }
+  };
+
   const renderSucesso = () => (
     <div className="flex flex-col items-center gap-6 text-center">
       <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center animate-pulse">
         <span className="text-4xl">🎉</span>
       </div>
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Tudo pronto!</h2>
+      <div className="w-full">
+        <h2 className="text-2xl font-bold text-white mb-2">
+          {credenciais?.duplicate ? 'Você já tinha conta!' : 'Tudo pronto!'}
+        </h2>
         <p className="text-slate-300 text-sm leading-relaxed mb-4">
-          O RAPDEX já está conectado e sua conta foi criada.
+          {credenciais?.duplicate
+            ? 'Encontramos um cadastro existente para esse número. Use as credenciais abaixo para entrar.'
+            : 'O RAPDEX já está conectado e sua conta foi criada.'}
         </p>
+
+        {credenciais && credenciais.senha ? (
+          <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/40 rounded-xl p-4 flex flex-col gap-3 text-left shadow-inner mb-4">
+            <p className="text-green-400 text-xs font-semibold uppercase tracking-wide">Suas credenciais</p>
+            <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 items-baseline">
+              <span className="text-slate-400 text-xs">📱 Login</span>
+              <span className="text-white font-mono text-sm select-all">{credenciais.login}</span>
+              <span className="text-slate-400 text-xs">🔑 Senha</span>
+              <span className="text-white font-mono text-sm tracking-wider select-all">{credenciais.senha}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-green-500/40 text-green-400 hover:bg-green-500/10 hover:text-green-300 mt-1"
+              onClick={copiarCredenciais}
+            >
+              {copiado
+                ? <><Check className="w-4 h-4 mr-2" /> Copiado!</>
+                : <><Copy className="w-4 h-4 mr-2" /> Copiar credenciais</>}
+            </Button>
+          </div>
+        ) : null}
+
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col gap-2 text-left shadow-inner">
+          <p className="text-slate-400 text-xs uppercase tracking-wide font-semibold mb-1">
+            {credenciais?.senha ? 'Backup no WhatsApp' : 'Como acessar'}
+          </p>
           <p className="text-slate-300 text-sm">
             <span className="text-green-400 font-semibold mr-1">1.</span>
-            Abra seu WhatsApp agora.
+            Abra seu WhatsApp.
           </p>
           <p className="text-slate-300 text-sm">
             <span className="text-green-400 font-semibold mr-1">2.</span>
-            Procure por uma mensagem enviada <strong className="text-white">de você para você mesmo(a)</strong>.
+            Procure uma mensagem <strong className="text-white">de você para você mesmo(a)</strong>.
           </p>
           <p className="text-slate-300 text-sm">
             <span className="text-green-400 font-semibold mr-1">3.</span>
-            A mensagem contém seu <strong>Login e Senha</strong> de acesso.
+            Ela contém seu <strong>Login e Senha</strong>{credenciais?.senha ? ' (os mesmos acima)' : ''}.
           </p>
         </div>
       </div>
       <Button
         className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-6 text-lg mt-2"
-        onClick={() => onComplete(celular)}
+        onClick={() => onComplete(credenciais?.login || celular)}
       >
         Ir para o Login <ChevronRight className="ml-2 w-5 h-5" />
       </Button>
