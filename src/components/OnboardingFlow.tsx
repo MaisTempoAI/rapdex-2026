@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useCallback, useEffect } from 'react';
+﻿﻿import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -99,6 +99,56 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
     if (cadastroAbortRef.current) { cadastroAbortRef.current.abort(); cadastroAbortRef.current = null; }
   }, [pararPolling]);
 
+  // Restaura estado do localStorage ao montar (se voltou pra aba, ou page reload)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('rapdex_onboarding_state');
+      if (saved) {
+        const state = JSON.parse(saved);
+        setStep(state.step);
+        setDispositivo(state.dispositivo);
+        setCelular(state.celular);
+        setNomeEmpresa(state.nomeEmpresa);
+        setPairingCode(state.pairingCode);
+        setQrBase64(state.qrBase64);
+        setToken(state.token);
+        setConexaoVerificada(state.conexaoVerificada);
+        if (state.faqs && state.faqs.length > 0) setFaqs(state.faqs);
+      }
+    } catch (e) {
+      // Ignora erro — localStorage pode estar corrompido
+    }
+  }, []); // Só roda uma vez ao montar
+
+  // Salva estado crítico em localStorage a cada mudança (para sobreviver a reload/aba morta)
+  useEffect(() => {
+    const stateToSave = {
+      step,
+      dispositivo,
+      celular,
+      nomeEmpresa,
+      pairingCode,
+      qrBase64,
+      token,
+      conexaoVerificada,
+      faqs,
+    };
+    try {
+      localStorage.setItem('rapdex_onboarding_state', JSON.stringify(stateToSave));
+    } catch (e) {
+      // Ignora erro se localStorage está cheio
+    }
+  }, [step, dispositivo, celular, nomeEmpresa, pairingCode, qrBase64, token, conexaoVerificada, faqs]);
+
+  // Limpa localStorage ao completar o cadastro (sucesso)
+  const limparLocalStorage = useCallback(() => {
+    try {
+      localStorage.removeItem('rapdex_onboarding_state');
+    } catch (e) {
+      // Ignora erro
+    }
+  }, []);
+
   const iniciarCooldown = useCallback((segundos = 3) => {
     setRegenCooldown(segundos);
     if (cooldownRef.current) clearInterval(cooldownRef.current);
@@ -180,6 +230,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
 
         toast.success(data.duplicate ? 'Você já tinha uma conta!' : 'Conta criada com sucesso!');
         setStep('sucesso');
+        limparLocalStorage(); // Limpa localStorage ao completar
         // promise mantida em ref após sucesso → bloqueia qualquer re-trigger acidental
       } catch (err: unknown) {
         if ((err as { name?: string })?.name === 'AbortError') return;
@@ -303,7 +354,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       )}
 
       <div className="flex gap-3">
-        <Button variant="outline" className="flex-1 border-slate-700 text-slate-400" onClick={() => setStep('boas_vindas')}>
+        <Button variant="outline" className="flex-1 border-slate-700 text-slate-400" onClick={() => { limparLocalStorage(); setStep('boas_vindas'); }}>
           <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
         </Button>
         <Button
@@ -859,7 +910,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
       </div>
       <Button
         className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-6 text-lg mt-2"
-        onClick={() => onComplete(credenciais?.login || celular)}
+        onClick={() => { limparLocalStorage(); onComplete(credenciais?.login || celular); }}
       >
         Ir para o Login <ChevronRight className="ml-2 w-5 h-5" />
       </Button>
@@ -881,7 +932,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
 
         {onBack && step !== 'finalizando' && step !== 'sucesso' && (
           <button
-            onClick={onBack}
+            onClick={() => { limparLocalStorage(); onBack(); }}
             className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm mb-5 transition-colors group"
           >
             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
