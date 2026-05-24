@@ -1,4 +1,4 @@
-﻿﻿import { useState, useRef, useCallback, useEffect } from 'react';
+﻿﻿﻿import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -713,10 +713,7 @@ export default function OnboardingFlow({ onComplete, onBack }: OnboardingProps) 
               </p>
             </div>
             <button
-              className="flex items-center justify-center gap-2 w-full py-2 text-sm rounded-lg border transition-colors"
-              style={copiadoCodigo
-                ? { color: '#4ade80', borderColor: 'rgba(74,222,128,0.4)', background: 'rgba(74,222,128,0.08)' }
-                : { color: '#94a3b8', borderColor: '#334155', background: '#1e293b' }}
+              className="flex items-center justify-center gap-2 w-full py-2 text-sm rounded-lg border border-green-500/40 text-green-400 hover:bg-green-500/10 hover:text-green-300 transition-colors"
               onClick={() => {
                 const codigo = pairingCode.length === 8 ? pairingCode : pairingCode.replace(/-/g, '');
                 navigator.clipboard.writeText(codigo);
